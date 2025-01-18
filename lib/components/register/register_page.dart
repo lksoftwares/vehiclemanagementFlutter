@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../appbar_method.dart';
+import '../widgetmethods/appbar_method.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

@@ -5,6 +5,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final Color fontColor;
+  final VoidCallback? onLogout;
+
   @override
   final Size preferredSize;
 
@@ -14,6 +16,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.fontSize = 24.0,
     this.fontWeight = FontWeight.bold,
     this.fontColor = Colors.white,
+    this.onLogout,  // Initialize onLogout
   }) : preferredSize = Size.fromHeight(56.0),
         super(key: key);
 
@@ -30,6 +33,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       backgroundColor: Colors.blueAccent,
+      actions: [
+        if (onLogout != null)
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: onLogout,
+            color: Colors.white,
+          ),
+      ],
     );
   }
 }

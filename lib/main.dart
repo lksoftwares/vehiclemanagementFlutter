@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'components/login_page.dart';
-import 'components/rows.dart';
+import 'components/login/login_page.dart';
 
 void main() {
   runApp(const MyApp());
+
 }
 
 class MyApp extends StatelessWidget {

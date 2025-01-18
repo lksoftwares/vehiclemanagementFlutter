@@ -1,24 +1,26 @@
-import 'package:vehiclemanagement/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../appbar_method.dart';
-import 'home_page.dart';
-import 'register_page.dart';
+import 'package:vehiclemanagement/components/widgetmethods/textfield_widget.dart';
+import '../../menurole.dart';
+import '../widgetmethods/appbar_method.dart';
+import '../menus/menuswithsubmenu.dart';
+import '../register/register_page.dart';
+import 'package:vehiclemanagement/config.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
+
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
-
+  String _emailError = '';
   List<dynamic> roles = [];
   String? _selectedRole;
 
@@ -29,16 +31,27 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _fetchRoles() async {
-    final response = await http.get(Uri.parse('${Config.apiUrl}Role/getallrole'));
-    if (response.statusCode == 200) {
-      List<dynamic> roleList = json.decode(response.body);
-      setState(() {
-        roles = roleList;
-      });
-    } else {
+    try {
+      final response = await http.get(Uri.parse('${Config.apiUrl}Role/GetAllRole'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['statusCode'] == 200 && data['apiResponse'] != null) {
+          setState(() {
+            roles = data['apiResponse'];
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load roles: Invalid response format'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to load roles'),
+          content: Text('Check your API'),
           backgroundColor: Colors.red,
         ),
       );
@@ -73,31 +86,43 @@ class _LoginPageState extends State<LoginPage> {
         body: loginData,
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final token = data['token'];
+print(response.body);
+        if (data['statusCode'] == 200 && data['apiResponse'] != null) {
+          final apiResponse = data['apiResponse'];
+          final token = apiResponse['token'];
 
-        if (token != null) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', token);
-          await prefs.setInt('user_Id', data['user_Id']);
-          await prefs.setInt('role_Id', data['role_Id']);
-          await prefs.setString('role_Name', data['role_Name']);
+          if (token != null) {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            await prefs.setString('token', token);
+            await prefs.setInt('user_Id', apiResponse['user_Id']);
+            await prefs.setInt('role_Id', apiResponse['role_Id']);
+            await prefs.setString('role_Name', apiResponse['role_Name']);
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => DashboardScreen()),
-          );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to login. Please try again.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            print(response.body);
+          }
         } else {
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to login. Please try again.'),
+              content: Text(data['message'] ?? 'Failed to login'),
               backgroundColor: Colors.red,
             ),
           );
+          print(response.body);
+
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,11 +131,12 @@ class _LoginPageState extends State<LoginPage> {
             backgroundColor: Colors.red,
           ),
         );
+        print(response.body);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please Check the API'),
+          content: Text('Check Your API'),
           backgroundColor: Colors.red,
         ),
       );
@@ -122,7 +148,8 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Login Now',
-      ),      body: Padding(
+      ),
+      body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           child: Form(
@@ -174,43 +201,23 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 SizedBox(height: 20),
-                TextFormField(
+                UsernameTextField(
                   controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your username';
-                    }
-                    return null;
+                  errorText: _emailError,
+                  onChanged: (email) {
+                    _validateEmail(email);
                   },
+                  validator: emailValidator,
                 ),
                 SizedBox(height: 20),
-                TextFormField(
+                PasswordTextField(
                   controller: _passwordController,
-                  obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  isPasswordVisible: _isPasswordVisible,
+                  toggleVisibility: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
@@ -252,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => RegisterPage()), // Update with your register screen
+                      MaterialPageRoute(builder: (context) => RegisterPage()),
                     );
                   },
                   child: Text(
@@ -269,5 +276,28 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  String? emailValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email';
+    }
+    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter the valid email with @gmail.com';
+    }
+    return null;
+  }
+
+  void _validateEmail(String email) {
+    if (!email.endsWith('@gmail.com')) {
+      setState(() {
+        _emailError = 'Please enter the valid email with @gmail.com';
+      });
+    } else {
+      setState(() {
+        _emailError = '';
+      });
+    }
   }
 }
