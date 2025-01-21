@@ -105,33 +105,39 @@ print(response.body);
               MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
             );
           } else {
+            var responseBody = jsonDecode(response.body);
+            String successMessage = responseBody['message'] ?? 'Failed';
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to login. Please try again.'),
+                content: Text(successMessage),
                 backgroundColor: Colors.red,
               ),
             );
-            print(response.body);
           }
         } else {
 
+          var responseBody = jsonDecode(response.body);
+          String successMessage = responseBody['message'] ?? 'Failed';
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(data['message'] ?? 'Failed to login'),
+              content: Text(successMessage),
               backgroundColor: Colors.red,
             ),
           );
-          print(response.body);
 
         }
       } else {
+        var responseBody = jsonDecode(response.body);
+        String successMessage = responseBody['message'] ?? 'Failed';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to login. Please check your credentials.'),
+            content: Text(successMessage),
             backgroundColor: Colors.red,
           ),
         );
-        print(response.body);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

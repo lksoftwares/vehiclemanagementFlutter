@@ -1,26 +1,25 @@
-//
 // import 'package:flutter/material.dart';
 // import 'dart:convert';
 // import 'package:http/http.dart' as http;
 // import 'package:shared_preferences/shared_preferences.dart';
-//
 // import 'components/login/logout _method.dart';
 // import 'components/widgetmethods/appbar_method.dart';
 // import 'config.dart';
 //
-// class MenuPage extends StatefulWidget {
+// class MenuRolePage extends StatefulWidget {
 //   @override
-//   _MenuPageState createState() => _MenuPageState();
+//   _MenuRolePageState createState() => _MenuRolePageState();
 // }
 //
-// class _MenuPageState extends State<MenuPage> {
+// class _MenuRolePageState extends State<MenuRolePage> {
 //   late Future<List<Menu>> menus;
 //   String? token;
-//
 //   List<dynamic> roles = [];
 //   int? selectedRoleId;
 //   int? selectedPermissionId;
 //   int? selectedMenuId;
+//
+//   List<Map<String, dynamic>> selectedPermissions = [];
 //
 //   @override
 //   void initState() {
@@ -42,7 +41,6 @@
 //         var responseBody = jsonDecode(response.body);
 //         String errorMessage = responseBody['message'] ?? 'Failed to add permission';
 //         print(errorMessage);
-//
 //       }
 //     } catch (e) {
 //       print("Exception: $e");
@@ -57,6 +55,7 @@
 //       print("Role ID is not set in SharedPreferences");
 //       return [];
 //     }
+//
 //     try {
 //       final response = await http.get(Uri.parse('${Config.apiUrl}Permission/GetAllMenusWithRole/$savedRoleId'));
 //
@@ -73,7 +72,6 @@
 //         var responseBody = jsonDecode(response.body);
 //         String errorMessage = responseBody['message'] ?? 'Failed to add permission';
 //         throw Exception(errorMessage);
-//
 //       }
 //     } catch (e) {
 //       print("Error fetching menus: $e");
@@ -85,17 +83,13 @@
 //     SharedPreferences prefs = await SharedPreferences.getInstance();
 //     token = prefs.getString('token');
 //
-//     if (selectedRoleId == null || selectedPermissionId == null || selectedMenuId == null) {
-//       print("Please select all fields: Role, Permission, and Menu.");
+//     if (selectedPermissions.isEmpty) {
+//       print("Please select values before submitting.");
 //       return;
 //     }
 //
 //     final url = Uri.parse('${Config.apiUrl}MenuRolePermission/AddMenuRolePermission');
-//     final body = jsonEncode({
-//       "RoleId": selectedRoleId,
-//       "PermissionId": selectedPermissionId,
-//       "MenuID": selectedMenuId,
-//     });
+//     final body = jsonEncode(selectedPermissions);
 //
 //     try {
 //       final response = await http.post(
@@ -109,7 +103,7 @@
 //       print('Request Body: $body');
 //       if (response.statusCode == 200) {
 //         var responseBody = jsonDecode(response.body);
-//         String successMessage = responseBody['message'] ?? 'Permission added successfully';
+//         String successMessage = responseBody['message'] ?? 'Permissions added successfully';
 //
 //         ScaffoldMessenger.of(context).showSnackBar(
 //           SnackBar(
@@ -119,7 +113,7 @@
 //         );
 //       } else {
 //         var responseBody = jsonDecode(response.body);
-//         String errorMessage = responseBody['message'] ?? 'Failed to add permission';
+//         String errorMessage = responseBody['message'] ?? 'Failed to add permissions';
 //
 //         ScaffoldMessenger.of(context).showSnackBar(
 //           SnackBar(
@@ -152,8 +146,7 @@
 //           DropdownButtonFormField<int>(
 //             value: selectedRoleId,
 //             decoration: InputDecoration(
-//               labelText: ''
-//                   'Select Role',
+//               labelText: 'Select Role',
 //               border: OutlineInputBorder(
 //                 borderRadius: BorderRadius.circular(10),
 //               ),
@@ -179,7 +172,6 @@
 //             },
 //             hint: Text('Select Role'),
 //           ),
-//
 //           SizedBox(height: 40),
 //           Expanded(
 //             child: FutureBuilder<List<Menu>>(
@@ -190,7 +182,7 @@
 //                 } else if (snapshot.hasError) {
 //                   return Center(child: Text('Error: ${snapshot.error}'));
 //                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-//                   return Center(child: Text('error'));
+//                   return Center(child: Text('No menus available.'));
 //                 } else {
 //                   return ListView.builder(
 //                     itemCount: snapshot.data!.length,
@@ -202,10 +194,9 @@
 //               },
 //             ),
 //           ),
-//           ElevatedButton(
+//           IconButton(
 //             onPressed: _sendPermissions,
-//             child: Text('Assign Permission'),
-//           ),
+//             icon: Icon(Icons.add,color: Colors.blueAccent, size: 40,),          ),
 //         ],
 //       ),
 //     );
@@ -227,6 +218,13 @@
 //               onMenuSelected: (menuId) {
 //                 setState(() {
 //                   selectedMenuId = menuId;
+//                   if (selectedRoleId != null && selectedPermissionId != null) {
+//                     selectedPermissions.add({
+//                       'RoleId': selectedRoleId,
+//                       'MenuID': selectedMenuId,
+//                       'PermissionId': selectedPermissionId,
+//                     });
+//                   }
 //                 });
 //               },
 //             ),
@@ -245,7 +243,6 @@
 //       );
 //     }
 //   }
-//
 //   Widget buildSubMenuWithPermission(Menu subMenu) {
 //     if (subMenu.subMenus.isEmpty || subMenu.subMenus.every((subSubMenu) => subSubMenu.menuName.isEmpty)) {
 //       return ListTile(
@@ -262,6 +259,13 @@
 //               onMenuSelected: (menuId) {
 //                 setState(() {
 //                   selectedMenuId = menuId;
+//                   if (selectedRoleId != null && selectedPermissionId != null) {
+//                     selectedPermissions.add({
+//                       'RoleId': selectedRoleId,
+//                       'MenuID': selectedMenuId,
+//                       'PermissionId': selectedPermissionId,
+//                     });
+//                   }
 //                 });
 //               },
 //             ),
@@ -349,7 +353,8 @@
 //   }) : super(key: key);
 //
 //   @override
-//   _SubmenuPermissionDropdownState createState() => _SubmenuPermissionDropdownState();
+//   _SubmenuPermissionDropdownState createState() =>
+//       _SubmenuPermissionDropdownState();
 // }
 //
 // class _SubmenuPermissionDropdownState extends State<SubmenuPermissionDropdown> {
@@ -372,80 +377,82 @@
 //       return;
 //     }
 //
-//     while (retryCount < 3) {
-//       try {
-//         final response = await http.get(
-//           Uri.parse('${Config.apiUrl}Permission/GetAllPermission'),
-//           headers: {
-//             'Authorization': 'Bearer $token',
-//           },
-//         );
+//     try {
+//       final response = await http.get(
+//         Uri.parse('${Config.apiUrl}Permission/GetAllPermission'),
+//         headers: {
+//           'Authorization': 'Bearer $token',
+//         },
+//       );
 //
-//         if (response.statusCode == 200) {
-//           var data = json.decode(response.body);
-//           if (data['isSuccess']) {
-//             List<Permission> fetchedPermissions = [];
-//             for (var permission in data['apiResponse']) {
-//               fetchedPermissions.add(Permission(
-//                 permissionType: permission['PermissionType'],
-//                 permissionId: permission['PermissionId'],
-//               ));
-//             }
-//             setState(() {
-//               permissionTypes = fetchedPermissions;
-//               if (widget.menu.roles.isNotEmpty) {
-//                 selectedPermission = widget.menu.roles.first.permissionType;
-//               } else {
-//                 selectedPermission = null;
-//               }
-//             });
-//             return;
-//           } else {
-//             print("API response 'isSuccess' is false");
+//       if (response.statusCode == 200) {
+//         var data = json.decode(response.body);
+//         if (data['isSuccess']) {
+//           List<Permission> fetchedPermissions = [];
+//           for (var permission in data['apiResponse']) {
+//             fetchedPermissions.add(Permission(
+//               permissionType: permission['PermissionType'],
+//               permissionId: permission['PermissionId'],
+//             ));
 //           }
+//           setState(() {
+//             permissionTypes = fetchedPermissions;
+//             if (widget.menu.roles.isNotEmpty &&
+//                 widget.menu.roles[0].permissionType.isNotEmpty) {
+//               selectedPermission = widget.menu.roles[0].permissionType;
+//             } else {
+//               selectedPermission = null;
+//             }
+//           });
+//           return;
 //         } else {
-//           print("Failed to load permissions with status code: ${response.statusCode}");
+//           print("API response 'isSuccess' is false");
 //         }
-//       } catch (e) {
-//         print("Error fetching permission types: $e");
+//       } else {
+//         print("Failed to load permissions with status code: ${response.statusCode}");
 //       }
-//
-//       retryCount++;
-//       await Future.delayed(Duration(seconds: 2));
+//     } catch (e) {
+//       print("Error fetching permission types: $e");
 //     }
-//
-//     print("Failed to fetch permission types after 3 attempts.");
 //   }
 //
 //   @override
 //   Widget build(BuildContext context) {
-//     if (permissionTypes.isEmpty) {
-//       return Text('No permissions available');
-//     }
-//
 //     return DropdownButton<Permission>(
 //       value: selectedPermission == null
 //           ? null
 //           : permissionTypes.firstWhere(
 //             (permission) => permission.permissionType == selectedPermission,
-//         orElse: () => permissionTypes[0],
+//         orElse: () => permissionTypes.isNotEmpty
+//             ? permissionTypes[0]
+//             : Permission(permissionType: 'Select ', permissionId: 0),
 //       ),
-//       hint: Text('Select Permission'),
+//       hint: Text('Select'),
 //       onChanged: (Permission? newValue) {
 //         setState(() {
-//           selectedPermission = newValue?.permissionType;
-//           if (newValue != null) {
+//           if (newValue == null) {
+//             selectedPermission = null;
+//             widget.onPermissionSelected(0);
+//             widget.onMenuSelected(widget.menu.menuID);
+//           } else {
+//             selectedPermission = newValue.permissionType;
 //             widget.onPermissionSelected(newValue.permissionId);
 //             widget.onMenuSelected(widget.menu.menuID);
 //           }
 //         });
 //       },
-//       items: permissionTypes.map<DropdownMenuItem<Permission>>((Permission permission) {
-//         return DropdownMenuItem<Permission>(
-//           value: permission,
-//           child: Text(permission.permissionType),
-//         );
-//       }).toList(),
+//       items: [
+//         DropdownMenuItem<Permission>(
+//           value: null,
+//           child: Text('Select'),
+//         ),
+//         ...permissionTypes.map<DropdownMenuItem<Permission>>((Permission permission) {
+//           return DropdownMenuItem<Permission>(
+//             value: permission,
+//             child: Text(permission.permissionType),
+//           );
+//         }).toList(),
+//       ],
 //     );
 //   }
 // }
@@ -453,24 +460,24 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'components/login/logout _method.dart';
 import 'components/widgetmethods/appbar_method.dart';
 import 'config.dart';
 
-class MenuPage extends StatefulWidget {
+class MenuRolePage extends StatefulWidget {
   @override
-  _MenuPageState createState() => _MenuPageState();
+  _MenuRolePageState createState() => _MenuRolePageState();
 }
 
-class _MenuPageState extends State<MenuPage> {
+class _MenuRolePageState extends State<MenuRolePage> {
   late Future<List<Menu>> menus;
   String? token;
-
   List<dynamic> roles = [];
   int? selectedRoleId;
   int? selectedPermissionId;
   int? selectedMenuId;
+
+  List<Map<String, dynamic>> selectedPermissions = [];
 
   @override
   void initState() {
@@ -506,6 +513,7 @@ class _MenuPageState extends State<MenuPage> {
       print("Role ID is not set in SharedPreferences");
       return [];
     }
+
     try {
       final response = await http.get(Uri.parse('${Config.apiUrl}Permission/GetAllMenusWithRole/$savedRoleId'));
 
@@ -533,17 +541,13 @@ class _MenuPageState extends State<MenuPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token');
 
-    if (selectedRoleId == null || selectedPermissionId == null || selectedMenuId == null) {
-      print("Please select all fields: Role, Permission, and Menu.");
+    if (selectedPermissions.isEmpty) {
+      print("Please select values before submitting.");
       return;
     }
 
     final url = Uri.parse('${Config.apiUrl}MenuRolePermission/AddMenuRolePermission');
-    final body = jsonEncode({
-      "RoleId": selectedRoleId,
-      "PermissionId": selectedPermissionId,
-      "MenuID": selectedMenuId,
-    });
+    final body = jsonEncode(selectedPermissions);
 
     try {
       final response = await http.post(
@@ -557,7 +561,7 @@ class _MenuPageState extends State<MenuPage> {
       print('Request Body: $body');
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
-        String successMessage = responseBody['message'] ?? 'Permission added successfully';
+        String successMessage = responseBody['message'] ?? 'Permissions added successfully';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -567,7 +571,7 @@ class _MenuPageState extends State<MenuPage> {
         );
       } else {
         var responseBody = jsonDecode(response.body);
-        String errorMessage = responseBody['message'] ?? 'Failed to add permission';
+        String errorMessage = responseBody['message'] ?? 'Failed to add permissions';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -586,7 +590,18 @@ class _MenuPageState extends State<MenuPage> {
       );
     }
   }
-
+  Future<void> resetPermissions() async {
+    List<Menu>? menuList = await menus;
+    setState(() {
+      selectedPermissionId = null;
+      selectedPermissions.clear();
+      if (menuList != null) {
+        for (var menu in menuList) {
+          menu.roles.clear();
+        }
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -648,9 +663,42 @@ class _MenuPageState extends State<MenuPage> {
               },
             ),
           ),
-          ElevatedButton(
+          IconButton(
             onPressed: _sendPermissions,
-            child: Text('Assign Permission'),
+            icon: Icon(Icons.add,color: Colors.blueAccent, size: 40,),          ),IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Reset Permissions'),
+                    content: Text('Are you sure you want to reset all permissions?'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await menus.then((menuList) {
+                            setState(() {
+                              selectedPermissionId = null;
+                              selectedPermissions.clear();
+                              for (var menu in menuList) {
+                                menu.roles.clear();
+                              }
+                            });
+                          });
+                        },
+                        child: Text('Reset'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            icon: Icon(Icons.refresh,size: 40, color: Colors.orange,),
           ),
         ],
       ),
@@ -673,6 +721,13 @@ class _MenuPageState extends State<MenuPage> {
               onMenuSelected: (menuId) {
                 setState(() {
                   selectedMenuId = menuId;
+                  if (selectedRoleId != null && selectedPermissionId != null) {
+                    selectedPermissions.add({
+                      'RoleId': selectedRoleId,
+                      'MenuID': selectedMenuId,
+                      'PermissionId': selectedPermissionId,
+                    });
+                  }
                 });
               },
             ),
@@ -691,7 +746,6 @@ class _MenuPageState extends State<MenuPage> {
       );
     }
   }
-
   Widget buildSubMenuWithPermission(Menu subMenu) {
     if (subMenu.subMenus.isEmpty || subMenu.subMenus.every((subSubMenu) => subSubMenu.menuName.isEmpty)) {
       return ListTile(
@@ -708,6 +762,13 @@ class _MenuPageState extends State<MenuPage> {
               onMenuSelected: (menuId) {
                 setState(() {
                   selectedMenuId = menuId;
+                  if (selectedRoleId != null && selectedPermissionId != null) {
+                    selectedPermissions.add({
+                      'RoleId': selectedRoleId,
+                      'MenuID': selectedMenuId,
+                      'PermissionId': selectedPermissionId,
+                    });
+                  }
                 });
               },
             ),
@@ -819,87 +880,87 @@ class _SubmenuPermissionDropdownState extends State<SubmenuPermissionDropdown> {
       return;
     }
 
-    while (retryCount < 3) {
-      try {
-        final response = await http.get(
-          Uri.parse('${Config.apiUrl}Permission/GetAllPermission'),
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        );
+    try {
+      final response = await http.get(
+        Uri.parse('${Config.apiUrl}Permission/GetAllPermission'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-        if (response.statusCode == 200) {
-          var data = json.decode(response.body);
-          if (data['isSuccess']) {
-            List<Permission> fetchedPermissions = [];
-            for (var permission in data['apiResponse']) {
-              fetchedPermissions.add(Permission(
-                permissionType: permission['PermissionType'],
-                permissionId: permission['PermissionId'],
-              ));
-            }
-            setState(() {
-              permissionTypes = fetchedPermissions;
-              // Check if permissionType is null for this menu
-              if (widget.menu.roles.isNotEmpty &&
-                  widget.menu.roles[0].permissionType.isNotEmpty) {
-                selectedPermission = widget.menu.roles[0].permissionType;
-              } else {
-                selectedPermission = null;  // Set null if permissionType is not found
-              }
-            });
-            return;
-          } else {
-            print("API response 'isSuccess' is false");
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        if (data['isSuccess']) {
+          List<Permission> fetchedPermissions = [];
+          for (var permission in data['apiResponse']) {
+            fetchedPermissions.add(Permission(
+              permissionType: permission['PermissionType'],
+              permissionId: permission['PermissionId'],
+            ));
           }
+          setState(() {
+            permissionTypes = fetchedPermissions;
+            if (widget.menu.roles.isNotEmpty &&
+                widget.menu.roles[0].permissionType.isNotEmpty) {
+              selectedPermission = widget.menu.roles[0].permissionType;
+            } else {
+              selectedPermission = null;
+            }
+          });
+          return;
         } else {
-          print("Failed to load permissions with status code: ${response.statusCode}");
+          print("API response 'isSuccess' is false");
         }
-      } catch (e) {
-        print("Error fetching permission types: $e");
+      } else {
+        print("Failed to load permissions with status code: ${response.statusCode}");
       }
-
-      retryCount++;
-      await Future.delayed(Duration(seconds: 2));
+    } catch (e) {
+      print("Error fetching permission types: $e");
     }
-
-    print("Failed to fetch permission types after 3 attempts.");
   }
+
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<Permission>(
-      value: selectedPermission == null
-          ? null
-          : permissionTypes.firstWhere(
-            (permission) => permission.permissionType == selectedPermission,
-        orElse: () => permissionTypes.isNotEmpty
-            ? permissionTypes[0]
-            : Permission(permissionType: 'Select Permission', permissionId: 0),
-      ),
-      hint: Text('Select Permission'),
-      onChanged: (Permission? newValue) {
-        setState(() {
-          selectedPermission = newValue?.permissionType;
-          if (newValue != null) {
-            widget.onPermissionSelected(newValue.permissionId);
-            widget.onMenuSelected(widget.menu.menuID);
-          }
-        });
-      },
-      items: permissionTypes.isNotEmpty
-          ? permissionTypes.map<DropdownMenuItem<Permission>>((Permission permission) {
-        return DropdownMenuItem<Permission>(
-          value: permission,
-          child: Text(permission.permissionType),
-        );
-      }).toList()
-          : [
-        DropdownMenuItem<Permission>(
-          value: Permission(permissionType: 'Select Permission', permissionId: 0),
-          child: Text('Select Permission'),
-        ),
-      ],
-    );
-  }
+    return Column(
+        children: [
+          DropdownButton<Permission>(
+            value: selectedPermission == null
+                ? null
+                : permissionTypes.firstWhere(
+                  (permission) => permission.permissionType == selectedPermission,
+              orElse: () => permissionTypes.isNotEmpty
+                  ? permissionTypes[0]
+                  : Permission(permissionType: 'Select ', permissionId: 0),
+            ),
+            hint: Text('Select'),
+            onChanged: (Permission? newValue) {
+              setState(() {
+                if (newValue == null) {
+                  selectedPermission = null;
+                  widget.onPermissionSelected(0);
+                  widget.onMenuSelected(widget.menu.menuID);
+                } else {
+                  selectedPermission = newValue.permissionType;
+                  widget.onPermissionSelected(newValue.permissionId);
+                  widget.onMenuSelected(widget.menu.menuID);
+                }
+              });
+            },
+            items: [
+              DropdownMenuItem<Permission>(
+                value: null,
+                child: Text('Select'),
+              ),
+              ...permissionTypes.map<DropdownMenuItem<Permission>>((Permission permission) {
+                return DropdownMenuItem<Permission>(
+                  value: permission,
+                  child: Text(permission.permissionType),
+                );
+              }).toList(),
+            ],
+          ),
+        ],
+       );
+    }
 }

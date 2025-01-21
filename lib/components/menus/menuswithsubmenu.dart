@@ -12,6 +12,7 @@ import '../../config.dart';
 import '../login/login_page.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/appbar_method.dart';
+import 'menu_page.dart';
 
 class Menuswithsubmenu extends StatefulWidget {
   const Menuswithsubmenu({super.key});
@@ -65,7 +66,7 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
     }
 
     final response = await http.get(
-      Uri.parse('${Config.apiUrl}Permission/GetAllMenuWithPermissions/$roleId'),
+      Uri.parse('${Config.apiUrl}Permission/GetRoleBasedMenus/$roleId'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -183,7 +184,7 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
               ),
             );
 
-          } else if(menuName == 'UserShifts'){
+          } else if(menuName == 'Users Shift'){
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -197,21 +198,28 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
                 builder: (context) => UsersPage(),
               ),
             );
-          } else if(menuName == 'Permissions'){
+          } else if(menuName == 'Permission'){
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => PermissionPage(),
               ),
             );
-          } else if(menuName == 'Role Menus Permissions'){
+          } else if(menuName == 'Menu Role Permission'){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MenuRolePage(),
+              ),
+            );
+          } else if(menuName == 'Menus'){
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => MenuPage(),
               ),
             );
-          } else {
+          }else {
             Navigator.push(
               context,
               MaterialPageRoute(
