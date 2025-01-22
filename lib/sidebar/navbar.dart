@@ -1,198 +1,188 @@
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:io';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vehiclemanagement/components/permissions/permission_page.dart';
-import 'package:vehiclemanagement/components/roles/roles_page.dart';
-import 'package:vehiclemanagement/components/users/users_page.dart';
-import 'package:vehiclemanagement/components/usershifts/usershift_page.dart';
-import 'package:vehiclemanagement/components/vehicles/vehicles_page.dart';
-import '../config.dart';
-import '../components/home/home_page.dart';
-import '../components/menus/menu_page.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
+import '../config.dart';
 class NavBar extends StatefulWidget {
   @override
   _NavBarState createState() => _NavBarState();
 }
 
 class _NavBarState extends State<NavBar> {
+  String userName = "User Name";
+  String roleName = "Role Name";
+  String profileImage = 'images/lklogo.jpg';
   File? _image;
-  String? _imageUrl;
-  final ImagePicker _picker = ImagePicker();
-  int? user_Id;
-  int? role_Id;
-  String? token;
-  String? roleName;
-  List<dynamic> menus = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchUserDetails();
+    _loadProfileData();
   }
 
-  _fetchUserDetails() async {
-    final prefs = await SharedPreferences.getInstance();
-    user_Id = prefs.getInt('user_Id');
-    role_Id = prefs.getInt('role_Id');
+  Future<void> _loadProfileData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? storedUserName = prefs.getString('user_Name');
+      String? storedRoleName = prefs.getString('role_Name');
 
-    token = prefs.getString('token');
-    roleName = prefs.getString('role_Name');
-
-    if (token != null && user_Id != null) {
-      await _fetchMenus();
-    }
-
-    setState(() {});
-  }
-  _fetchMenus() async {
-    if (token == null || user_Id == null) return;
-
-    final response = await http.get(
-      Uri.parse('http://192.168.1.57:7248/Permission/GetAllMenuWithPermissions/${role_Id}'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-    print(' Response: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['isSuccess']) {
+      if (storedUserName != null) {
         setState(() {
-          menus = data['apiResponse'];
+          userName = storedUserName;
+        });
+      }
+      if (storedRoleName != null) {
+        setState(() {
+          roleName = storedRoleName;
+        });
+      }
+      _loadProfileImage();
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading profile data: $e")),
+      );
+    }
+  }
+
+  Future<void> _loadProfileImage() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int? userId = prefs.getInt('user_Id');
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("User ID not found in shared preferences")),
+        );
+        return;
+      }
+
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Token not found in shared preferences")),
+        );
+        return;
+      }
+
+      var response = await http.get(
+        Uri.parse('${Config.apiUrl}Users/ProfileImage/$userId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        var imageUrl = data['apiResponse']['imageUrl'];
+
+        setState(() {
+          profileImage = imageUrl;
         });
       } else {
-        Fluttertoast.showToast(msg: 'Failed to fetch menus');
+        Fluttertoast.showToast(
+          msg: "Failed to Fetch Profile Image",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
       }
-    } else {
-      Fluttertoast.showToast(msg: 'Failed to fetch menus');
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Check your API",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
     }
   }
 
-  Future<void> _selectImage() async {
-    final source = await showDialog<ImageSource>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Choose image source"),
-        actions: <Widget>[
-          TextButton(
-            child: Text("Camera"),
-            onPressed: () {
-              Navigator.pop(context, ImageSource.camera);
-            },
-          ),
-          TextButton(
-            child: Text("Gallery"),
-            onPressed: () {
-              Navigator.pop(context, ImageSource.gallery);
-            },
-          ),
-        ],
-      ),
-    );
-    if (source == null) return;
-
-    final XFile? pickedFile = await _picker.pickImage(source: source);
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
       });
+      _updateImage(File(pickedFile.path));
+    }
+  }
+  Future<void> _updateImage(File image) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      await _uploadImage(pickedFile);
+      String? token = prefs.getString('token');
+      int? userId = prefs.getInt('user_Id');
+
+      if (userId == null || token == null) {
+        Fluttertoast.showToast(
+          msg: "User ID or Token not found in shared preferences",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+        return;
+      }
+
+      String userIdString = userId.toString();
+
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('${Config.apiUrl}Users/updateUser/$userIdString'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseBody = await response.stream.bytesToString();
+        var data = jsonDecode(responseBody);
+
+        if (data != null && data['apiResponse'] != null && data['apiResponse']['message'] != null) {
+          var message = data['apiResponse']['message'];
+          Fluttertoast.showToast(
+            msg: message,
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "Image updated successfully",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+          );
+        }
+
+        setState(() {
+          profileImage = image.path;
+        });
+      } else {
+        var responseBody = await response.stream.bytesToString();
+        var data = jsonDecode(responseBody);
+        var message = data != null && data['apiResponse'] != null && data['apiResponse']['message'] != null
+            ? data['apiResponse']['message']
+            : "Failed to update image";
+
+        Fluttertoast.showToast(
+          msg: message,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Failed to Update Image! Check your API ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
     }
   }
 
-  _uploadImage(XFile pickedFile) async {
-    if (user_Id == null || token == null) return;
 
-    final uri = Uri.parse('${Config.apiUrl}Users/updateUser/$user_Id');
-    final request = http.MultipartRequest('PUT', uri)
-      ..headers['Authorization'] = 'Bearer $token';
-    final file = await http.MultipartFile.fromPath('Image', pickedFile.path);
-    request.files.add(file);
-    final response = await request.send();
-
-    if (response.statusCode == 200) {
-      Fluttertoast.showToast(msg: 'Image updated successfully');
-      _fetchProfileImage();
-    } else {
-      Fluttertoast.showToast(msg: 'Failed to update image');
-    }
-  }
-
-  _fetchProfileImage() async {
-    if (user_Id == null || token == null) return;
-
-    final response = await http.get(
-      Uri.parse('${Config.apiUrl}Users/ProfileImage/$user_Id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      setState(() {
-        _imageUrl = data['imageUrl'];
-      });
-      _saveImageUrlToPreferences(_imageUrl);
-    } else {
-      Fluttertoast.showToast(msg: 'Failed to fetch image');
-    }
-  }
-
-  _saveImageUrlToPreferences(String? imageUrl) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (imageUrl != null) {
-      await prefs.setString('profile_image_url', imageUrl);
-    }
-  }
-
-  Widget _buildMenuList(List<dynamic> menuItems) {
-    return Column(
-      children: menuItems.map<Widget>((menu) {
-        return _buildMenuItem(menu);
-      }).toList(),
-    );
-  }
-
-  Widget _buildMenuItem(dynamic menu) {
-    return ExpansionTile(
-      leading: Icon(Icons.home),
-      title: Text(menu['menuName']),
-      children: menu['subMenus'] != null && menu['subMenus'].isNotEmpty
-          ? menu['subMenus'].map<Widget>((submenu) {
-        return _buildSubMenuItem(submenu);
-      }).toList()
-          : [],
-    );
-  }
-
-  Widget _buildSubMenuItem(dynamic submenu) {
-    return ExpansionTile(
-      leading: Icon(Icons.arrow_forward,size: 20,),
-      title: Text(submenu['menuName']),
-      children: submenu['subMenus'] != null && submenu['subMenus'].isNotEmpty
-          ? submenu['subMenus'].map<Widget>((subsubmenu) {
-        return _buildSubSubMenuItem(subsubmenu);
-      }).toList()
-          : [],
-    );
-  }
-
-  Widget _buildSubSubMenuItem(dynamic subsubmenu) {
-    return ListTile(
-      title: Text(subsubmenu['menuName']),
-      onTap: () {
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,120 +191,32 @@ class _NavBarState extends State<NavBar> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountEmail: Padding(
-              padding: const EdgeInsets.only(bottom: 30, left: 7),
-              child: Text(
-                roleName ?? 'Loading...',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-              ),
+            decoration: BoxDecoration(
+              color: Colors.blueAccent,
             ),
-            accountName: Text(''),
+            accountEmail: Text(
+              userName,
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 25),
+            ),
+            accountName: Padding(
+              padding: const EdgeInsets.only(top: 30,left: 9),
+              child: Text(roleName,style: TextStyle(fontSize: 20),),
+            ),
+
             currentAccountPicture: GestureDetector(
-              onTap: _selectImage,
+              onTap: _pickImage,
               child: CircleAvatar(
                 radius: 60,
                 backgroundImage: _image != null
                     ? FileImage(_image!)
-                    : (_imageUrl != null
-                    ? NetworkImage(_imageUrl!)
-                    : AssetImage('images/lklogo.jpg') as ImageProvider),
-                backgroundColor: Colors.grey[200],
+                    : (profileImage.startsWith('http')
+                    ? NetworkImage(profileImage)
+                    : AssetImage(profileImage) as ImageProvider),
               ),
             ),
           ),
-          _buildMenuList(menus),
         ],
       ),
     );
   }
 }
-
-//           if (roleName == 'Admin') ...[
-//             _buildMenuList(menus),
-//           ] else ...[
-//             ListTile(
-//               leading: Icon(Icons.home),
-//               title: Text('Home'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => DashboardScreen()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.person_add_outlined),
-//               title: Text('Roles'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => RolesPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.people),
-//               title: Text('Users'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => UsersPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.car_rental),
-//               title: Text('Vehicles'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => VehiclesPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.watch_later),
-//               title: Text('UserShifts'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => UsershiftPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.input),
-//               title: Text('Menus'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => MenuPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.perm_identity),
-//               title: Text('Permissions'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => PermissionPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               leading: Icon(Icons.supervised_user_circle_rounded),
-//               title: Text('Menu Role Permissions'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => MenurolepermissionsPage()),
-//                 );
-//               },
-//             ),
-//           ],
-//         ],
-//       ),
-//     );
-//   }
-// }

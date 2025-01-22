@@ -526,6 +526,7 @@ class _MenuRolePageState extends State<MenuRolePage> {
           }
         }
         return menuList;
+
       } else {
         var responseBody = jsonDecode(response.body);
         String errorMessage = responseBody['message'] ?? 'Failed to add permission';
@@ -542,8 +543,11 @@ class _MenuRolePageState extends State<MenuRolePage> {
     token = prefs.getString('token');
 
     if (selectedPermissions.isEmpty) {
-      print("Please select values before submitting.");
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text( 'Select values from dropdown before adding')    ,
+          backgroundColor: Colors.orange,
+        ),
+      );      return;
     }
 
     final url = Uri.parse('${Config.apiUrl}MenuRolePermission/AddMenuRolePermission');
@@ -572,7 +576,6 @@ class _MenuRolePageState extends State<MenuRolePage> {
       } else {
         var responseBody = jsonDecode(response.body);
         String errorMessage = responseBody['message'] ?? 'Failed to add permissions';
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -663,48 +666,54 @@ class _MenuRolePageState extends State<MenuRolePage> {
               },
             ),
           ),
-          IconButton(
-            onPressed: _sendPermissions,
-            icon: Icon(Icons.add,color: Colors.blueAccent, size: 40,),          ),IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Reset Permissions'),
-                    content: Text('Are you sure you want to reset all permissions?'),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          await menus.then((menuList) {
-                            setState(() {
-                              selectedPermissionId = null;
-                              selectedPermissions.clear();
-                              for (var menu in menuList) {
-                                menu.roles.clear();
-                              }
-                            });
-                          });
-                        },
-                        child: Text('Reset'),
-                      ),
-                    ],
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Reset Permissions'),
+                        content: Text('Are you sure you want to reset all permissions?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              await menus.then((menuList) {
+                                setState(() {
+                                  selectedPermissionId = null;
+                                  selectedPermissions.clear();
+                                  for (var menu in menuList) {
+                                    menu.roles.clear();
+                                  }
+                                });
+                              });
+                            },
+                            child: Text('Reset'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
-              );
-            },
-            icon: Icon(Icons.refresh,size: 40, color: Colors.orange,),
+                icon: Icon(Icons.refresh,size: 40, color: Colors.orange,),
+              ),
+              SizedBox(width: 245,),
+
+              IconButton(
+                onPressed: _sendPermissions,
+                icon: Icon(Icons.add,color: Colors.blueAccent, size: 40,),  ),
+            ],
           ),
         ],
       ),
     );
   }
-
   Widget buildMenu(Menu menu) {
     if (menu.subMenus.isEmpty || menu.subMenus.every((subMenu) => subMenu.menuName.isEmpty)) {
       return ListTile(
@@ -746,6 +755,7 @@ class _MenuRolePageState extends State<MenuRolePage> {
       );
     }
   }
+
   Widget buildSubMenuWithPermission(Menu subMenu) {
     if (subMenu.subMenus.isEmpty || subMenu.subMenus.every((subSubMenu) => subSubMenu.menuName.isEmpty)) {
       return ListTile(

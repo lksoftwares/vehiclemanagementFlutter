@@ -23,6 +23,7 @@ class _UsersPageState extends State<UsersPage> {
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+
   @override
   void initState() {
     super.initState();
@@ -132,12 +133,13 @@ class _UsersPageState extends State<UsersPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'] ?? 'users added successfully')),
         );
+        Navigator.pop(context);
+
       } else {
         fetchData();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'] ?? 'users added successfully')),
         );
-        Navigator.pop(context);
       }
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);
@@ -151,36 +153,75 @@ class _UsersPageState extends State<UsersPage> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+
+    final _formKey = GlobalKey<FormState>(); // Add a key to validate the form
+
     if (!canCreate) {
       showCustomAlertDialog(
         context,
         title: 'Permission Denied',
-        content: Text('You do not have permission to add roles.'), actions: [],
+        content: Text('You do not have permission to add roles.'),
+        actions: [],
       );
       return;
     }
+
     showCustomAlertDialog(
       context,
       title: 'Add User',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: nameController,
-            decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Name'),
-          ),
-          SizedBox(height: 7),
-          TextField(
-            controller: emailController,
-            decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Email'),
-          ),
-          SizedBox(height: 7),
-          TextField(
-            controller: passwordController,
-            decoration: InputDecoration(border: OutlineInputBorder(), labelText: 'Password'),
-          ),
-
-        ],
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: nameController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Name',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Name is required';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 7),
+            TextFormField(
+              controller: emailController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Email',
+              ),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Email is required';
+                }
+                final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$');
+                if (!emailRegExp.hasMatch(value)) {
+                  return 'Please enter a valid Gmail address';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 7),
+            TextFormField(
+              controller: passwordController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Password',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Password is required';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -189,15 +230,9 @@ class _UsersPageState extends State<UsersPage> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (nameController.text.isNotEmpty &&
-                emailController.text.isNotEmpty &&
-                passwordController.text.isNotEmpty ) {
+            if (_formKey.currentState?.validate() ?? false) {
               addUser(nameController.text, emailController.text, passwordController.text);
               Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please fill all the fields')),
-              );
             }
           },
           child: Text('Add'),
@@ -205,6 +240,7 @@ class _UsersPageState extends State<UsersPage> {
       ],
     );
   }
+
   Future<void> deleteUser(int userId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -349,7 +385,7 @@ class _UsersPageState extends State<UsersPage> {
                 selectedRoleId = value;
               });
             },
-            value: selectedRoleId, // Set the selected role
+            value: selectedRoleId,
           ),
         ],
       ),

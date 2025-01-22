@@ -1,5 +1,8 @@
+
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgetmethods/appbar_method.dart';
@@ -18,6 +21,7 @@ class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> _menuData = [];
   final TextEditingController _menuNameController = TextEditingController();
   int? _selectedMenuId;
+  File? _selectedImage;
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -41,10 +45,12 @@ class _MenuPageState extends State<MenuPage> {
       if (data['statusCode'] == 200 && data['isSuccess']) {
         setState(() {
           _menuData =
-              List<Map<String, dynamic>>.from(data['apiResponse'].map((item) {
+          List<Map<String, dynamic>>.from(data['apiResponse'].map((item) {
             return {
               'menuId': item['menuId'],
               'menuName': item['menuName'],
+              'iconPath': item['iconPath'],
+              'iconUrl': item['iconUrl'],
             };
           }).toList());
         });
@@ -61,66 +67,78 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  Future<void> _addMenu(String menuName) async {
+  Future<void> _addMenu(String menuName, File? imageFile) async {
     final token = await _getToken();
     if (token == null) {
       return;
     }
 
-    final response = await http.post(
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('${Config.apiUrl}Menus/addMenu'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'menuName': menuName}),
     );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.fields['Menu_Name'] = menuName;
+
+    if (imageFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('IconPath', imageFile.path),
+      );
+    }
+
+    final response = await request.send();
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       Navigator.of(context).pop();
       _fetchMenuData();
-      Map<String, dynamic> responseData = json.decode(response.body);
+      final responseData = await response.stream.bytesToString();
+      final decodedData = json.decode(responseData);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text(responseData['message'] ?? 'Menu added successfully')),
+        SnackBar(content: Text(decodedData['message'] ?? 'Menu added successfully')),
       );
     } else {
-      Map<String, dynamic> responseData = json.decode(response.body);
+      final responseData = await response.stream.bytesToString();
+      final decodedData = json.decode(responseData);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+        SnackBar(content: Text(decodedData['message'] ?? 'Failed')),
       );
     }
   }
 
-  Future<void> _updateMenu(int menuId, String menuName) async {
+  Future<void> _updateMenu(int menuId, String menuName, File? imageFile) async {
     final token = await _getToken();
     if (token == null) {
       return;
     }
 
-    final response = await http.put(
+    final request = http.MultipartRequest(
+      'PUT',
       Uri.parse('${Config.apiUrl}Menus/updateMenu/$menuId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'menuName': menuName}),
     );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.fields['Menu_Name'] = menuName;
+
+    if (imageFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('IconPath', imageFile.path),
+      );
+    }
+
+    final response = await request.send();
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       Navigator.of(context).pop();
       _fetchMenuData();
-      Map<String, dynamic> responseData = json.decode(response.body);
+      final responseData = await response.stream.bytesToString();
+      final decodedData = json.decode(responseData);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text(responseData['message'] ?? 'Menu updated successfully')),
+        SnackBar(content: Text(decodedData['message'] ?? 'Menu updated successfully')),
       );
     } else {
-      Map<String, dynamic> responseData = json.decode(response.body);
+      final responseData = await response.stream.bytesToString();
+      final decodedData = json.decode(responseData);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+        SnackBar(content: Text(decodedData['message'] ?? 'Failed')),
       );
     }
   }
@@ -142,8 +160,7 @@ class _MenuPageState extends State<MenuPage> {
       Map<String, dynamic> responseData = json.decode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text(responseData['message'] ?? 'Menu deleted successfully')),
+            content: Text(responseData['message'] ?? 'Menu deleted successfully')),
       );
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);
@@ -153,41 +170,83 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  void _showMenuDialog({int? menuId, String? currentName}) {
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+  void _showMenuDialog({int? menuId, String? currentName, String? currentImage}) {
     _menuNameController.text = currentName ?? '';
     _selectedMenuId = menuId;
+    _selectedImage = null;
 
     showCustomAlertDialog(
       context,
       title: menuId == null ? 'Add Menu' : 'Edit Menu',
-      content: TextField(
-        controller: _menuNameController,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Enter Menu Name',
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _menuNameController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'Enter Menu Name',
+            ),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+            onPressed: _pickImage,
+            icon: Icon(Icons.image),
+            label: Text('Select Image'),
+          ),
+          const SizedBox(height: 10),
+          if (_selectedImage != null)
+            Image.file(
+              _selectedImage!,
+              height: 100,
+              width: 100,
+              fit: BoxFit.cover,
+            )
+          else if (currentImage != null)
+            Image.network(
+              currentImage,
+              height: 100,
+              width: 100,
+              fit: BoxFit.cover,
+            ),
+        ],
       ),
       actions: [
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
             _menuNameController.clear();
+            setState(() {
+              _selectedImage = null;
+            });
           },
           child: Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
             final menuName = _menuNameController.text.trim();
-            if (menuName.isEmpty) {
+
+            if (menuName.isEmpty || _selectedImage == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please fill in the menu name field')),
+                SnackBar(content: Text('Please fill all fields')),
               );
               return;
             }
+
             if (menuId == null) {
-              _addMenu(menuName);
+              _addMenu(menuName, _selectedImage);
             } else {
-              _updateMenu(menuId, menuName);
+              _updateMenu(menuId, menuName, _selectedImage);
             }
           },
           child: Text(menuId == null ? 'Add' : 'Update'),
@@ -224,9 +283,11 @@ class _MenuPageState extends State<MenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Menus',
+
         onLogout: () => AuthService.logout(context),
       ),
       body: SingleChildScrollView(
+
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -240,7 +301,7 @@ class _MenuPageState extends State<MenuPage> {
                   ),
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.blue, size: 30),
-                    onPressed: _showMenuDialog,
+                    onPressed: () => _showMenuDialog(),
                   ),
                 ],
               ),
@@ -248,42 +309,58 @@ class _MenuPageState extends State<MenuPage> {
               _menuData.isEmpty
                   ? Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('Menu Name', style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),)),
-                          DataColumn(label: Text('Edit', style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),)),
-                          DataColumn(label: Text('Delete', style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),)),
-                        ],
-                        rows: _menuData.map((item) {
-                          return DataRow(cells: [
-                            DataCell(Text(item['menuName'])),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: Colors.green),
-                                  onPressed: () => _showMenuDialog(
-                                    menuId: item['menuId'],
-                                    currentName: item['menuName'],
-                                  ),
-                                ),
-                              ],
-                            )),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _showDeleteConfirmationDialog(
-                                      item['menuId']),
-                                ),
-                              ],
-                            )),
-                          ]);
-                        }).toList(),
+                scrollDirection: Axis.horizontal,
+
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Icon', style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),)),
+                    DataColumn(label: Text('MenuName', style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),)),
+                    DataColumn(label: Text('Edit', style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),)),
+                    DataColumn(label: Text('Delete', style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),)),
+                  ],
+                  rows: _menuData.map((item) {
+                    return DataRow(cells: [
+                      DataCell(
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundImage: item['iconUrl'] != null
+                              ? NetworkImage(item['iconUrl'])
+                              : null,
+                          child: item['iconUrl'] == null
+                              ? Icon(Icons.image_not_supported, size: 24)
+                              : null,
+                        ),
                       ),
-                    ),
+                      DataCell(Text(item['menuName'])),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit, color: Colors.green),
+                            onPressed: () => _showMenuDialog(
+                              menuId: item['menuId'],
+                              currentName: item['menuName'],
+                              currentImage: item['iconUrl'],
+                            ),
+                          ),
+                        ],
+                      )),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _showDeleteConfirmationDialog(
+                                item['menuId']),
+                          ),
+                        ],
+                      )),
+                    ]);
+                  }).toList(),
+                ),
+              ),
             ],
           ),
         ),

@@ -134,7 +134,7 @@ class _PermissionPageState extends State<PermissionPage> {
     }
     showCustomAlertDialog(
       context,
-      title: 'Add Permission Type',
+      title: 'Add Permission',
       content: TextField(
         controller: _controller,
         decoration: InputDecoration(

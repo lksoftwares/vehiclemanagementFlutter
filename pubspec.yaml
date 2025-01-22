@@ -73,6 +73,7 @@ flutter:
      - images/truckk.png
      - images/watch.jpg
      - images/lklogo.jpg
+     - images/Logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

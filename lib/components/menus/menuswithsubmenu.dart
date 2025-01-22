@@ -8,6 +8,7 @@ import 'package:vehiclemanagement/components/users/users_page.dart';
 import 'package:vehiclemanagement/components/usershifts/usershift_page.dart';
 import 'package:vehiclemanagement/components/vehicles/vehicles_page.dart';
 import 'package:vehiclemanagement/menurole.dart';
+import 'package:vehiclemanagement/sidebar/navbar.dart';
 import '../../config.dart';
 import '../login/login_page.dart';
 import '../login/logout _method.dart';
@@ -82,7 +83,7 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Error'),
-              content: Text(responseData['message'] ?? 'Role added successfully'),
+              content: Text(responseData['message'] ?? 'Error'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
@@ -133,34 +134,57 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
     Color menuBackgroundColor = Colors.blueAccent;
 
     String menuName = menu['menuName'] ?? 'Unknown Menu';
+    String? menuIcon = menu['icon'];
 
     if (menu['subMenus'] != null && menu['subMenus'].isNotEmpty) {
       return ExpansionTile(
         title: Container(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(5.0),
           decoration: BoxDecoration(
             color: menuBackgroundColor,
             borderRadius: BorderRadius.circular(8.0),
           ),
-          child: Text(
-            menuName,
-            style: menuTextStyle,
+          child: Row(
+            children: [
+              menuIcon != null && menuIcon.isNotEmpty
+                  ? CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(menuIcon),
+              )
+                  : CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+              const SizedBox(width: 12),
+              Text(
+                menuName,
+                style: menuTextStyle,
+              ),
+            ],
           ),
         ),
         children: menu['subMenus'].map<Widget>((submenu) => buildMenuItem(submenu)).toList(),
       );
     } else {
       return ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        contentPadding: EdgeInsets.only(left: 16.0, right: 8.0),
         title: Container(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(5.0),
           decoration: BoxDecoration(
             color: menuBackgroundColor,
             borderRadius: BorderRadius.circular(8.0),
           ),
-          child: Text(
-            menuName,
-            style: menuTextStyle,
+          child: Row(
+            children: [
+              menuIcon != null && menuIcon.isNotEmpty
+                  ? CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(menuIcon),
+              )
+                  : CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+              const SizedBox(width: 12),
+              Text(
+                menuName,
+                style: menuTextStyle,
+              ),
+            ],
           ),
         ),
         onTap: () {
@@ -183,7 +207,6 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
                 builder: (context) => VehiclesPage(),
               ),
             );
-
           } else if(menuName == 'Users Shift'){
             Navigator.push(
               context,
@@ -219,7 +242,7 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
                 builder: (context) => MenuPage(),
               ),
             );
-          }else {
+          } else {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -237,8 +260,10 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Menus',
+
         onLogout: () => AuthService.logout(context),
       ),
+      drawer: NavBar(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : buildMenu(menuData),

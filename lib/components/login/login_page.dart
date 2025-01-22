@@ -99,6 +99,8 @@ print(response.body);
             await prefs.setInt('user_Id', apiResponse['user_Id']);
             await prefs.setInt('role_Id', apiResponse['role_Id']);
             await prefs.setString('role_Name', apiResponse['role_Name']);
+            await prefs.setString('user_Name', apiResponse['user_Name']);
+
 
             Navigator.pushReplacement(
               context,
