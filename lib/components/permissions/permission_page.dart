@@ -6,6 +6,7 @@ import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/alert_widget.dart';
+import '../widgetmethods/bottomnavigation_method.dart';
 
 class PermissionPage extends StatefulWidget {
   const PermissionPage({super.key});
@@ -22,6 +23,7 @@ class _PermissionPageState extends State<PermissionPage> {
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -354,6 +356,15 @@ class _PermissionPageState extends State<PermissionPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import 'package:vehiclemanagement/config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/bottomnavigation_method.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -17,6 +18,7 @@ class VehiclesPage extends StatefulWidget {
 class _VehiclesPageState extends State<VehiclesPage> {
   late Future<List<Vehicle>> _vehiclesFuture;
   String? token;
+  int _currentIndex = 0;
 
   String? permissionType;
   bool canRead = false;
@@ -441,6 +443,15 @@ class _VehiclesPageState extends State<VehiclesPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

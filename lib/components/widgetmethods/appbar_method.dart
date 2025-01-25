@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -6,7 +7,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final FontWeight fontWeight;
   final Color fontColor;
   final VoidCallback? onLogout;
-
   @override
   final Size preferredSize;
 
@@ -30,6 +30,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           fontSize: fontSize,
           fontWeight: fontWeight,
           color: fontColor,
+
         ),
       ),
       backgroundColor: Colors.blueAccent,

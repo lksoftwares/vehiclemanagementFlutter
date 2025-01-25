@@ -462,6 +462,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'components/login/logout _method.dart';
 import 'components/widgetmethods/appbar_method.dart';
+import 'components/widgetmethods/bottomnavigation_method.dart';
 import 'config.dart';
 
 class MenuRolePage extends StatefulWidget {
@@ -472,6 +473,8 @@ class MenuRolePage extends StatefulWidget {
 class _MenuRolePageState extends State<MenuRolePage> {
   late Future<List<Menu>> menus;
   String? token;
+  int _currentIndex = 0;
+
   List<dynamic> roles = [];
   int? selectedRoleId;
   int? selectedPermissionId;
@@ -712,7 +715,17 @@ class _MenuRolePageState extends State<MenuRolePage> {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
     );
+
   }
   Widget buildMenu(Menu menu) {
     if (menu.subMenus.isEmpty || menu.subMenus.every((subMenu) => subMenu.menuName.isEmpty)) {

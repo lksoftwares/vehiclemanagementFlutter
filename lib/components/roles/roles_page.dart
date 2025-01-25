@@ -6,6 +6,7 @@ import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/bottomnavigation_method.dart';
 
 class RolesPage extends StatefulWidget {
   const RolesPage({super.key});
@@ -22,6 +23,7 @@ class _RolesPageState extends State<RolesPage> {
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -407,6 +409,15 @@ class _RolesPageState extends State<RolesPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

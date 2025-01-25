@@ -6,6 +6,7 @@ import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/bottomnavigation_method.dart';
 
 class UsersPage extends StatefulWidget {
   @override
@@ -19,6 +20,8 @@ class _UsersPageState extends State<UsersPage> {
   bool isLoading = true;
   String? token;
   String? permissionType;
+  int _currentIndex = 0;
+
   bool canRead = false;
   bool canCreate = false;
   bool canUpdate = false;
@@ -555,6 +558,15 @@ class _UsersPageState extends State<UsersPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

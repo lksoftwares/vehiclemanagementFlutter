@@ -8,6 +8,7 @@ import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/bottomnavigation_method.dart';
 
 class UsershiftPage extends StatefulWidget {
   const UsershiftPage({super.key});
@@ -23,6 +24,8 @@ class _UsershiftPageState extends State<UsershiftPage> {
   bool canRead = false;
   bool canCreate = false;
   bool canUpdate = false;
+  int _currentIndex = 0;
+
   bool canDelete = false;
   @override
   void initState() {
@@ -542,6 +545,15 @@ class _UsershiftPageState extends State<UsershiftPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        context: context,
+        onItemTapped: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

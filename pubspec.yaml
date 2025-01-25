@@ -46,6 +46,7 @@ dependencies:
   get: ^4.6.6
   internet_connection_checker: ^3.0.1
   dropdown_button2: ^2.3.9
+  google_fonts: ^6.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
