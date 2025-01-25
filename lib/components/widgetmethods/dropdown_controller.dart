@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class DropdownWidget extends StatelessWidget {
   final List<String> items;
   final String selectedValue;
@@ -10,7 +11,6 @@ class DropdownWidget extends StatelessWidget {
     required this.selectedValue,
     required this.onChanged,
   });
-
   @override
   Widget build(BuildContext context) {
     return DropdownButton<String>(
@@ -26,16 +26,12 @@ class DropdownWidget extends StatelessWidget {
   }
 }
 
-
-
-
-
-class MyHomePage extends StatefulWidget {
+class DropdownController extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _DropdownControllerState createState() => _DropdownControllerState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _DropdownControllerState extends State<DropdownController> {
   String selectedItem = 'Item 1';
 
   @override
@@ -44,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Dropdown in Flutter'),
+        title: Text('Dropdown'),
       ),
       body: Center(
         child: DropdownWidget(
@@ -56,6 +52,29 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
         ),
+      ),
+    );
+  }
+}
+
+class Dropdown extends StatefulWidget {
+  const Dropdown({super.key});
+
+  @override
+  State<Dropdown> createState() => _DropdownState();
+}
+String selectedItems = 'Mango';
+class _DropdownState extends State<Dropdown> {
+  @override
+  Widget build(BuildContext context) {
+    List<String> fruits =['Mango', "apple" , "banana", "grapes"];
+    return Scaffold(
+      body: Center(
+        child: DropdownWidget(items: fruits, selectedValue: selectedItems, onChanged: (String? newValue){
+          setState(() {
+            selectedItems =newValue!;
+          });
+        }),
       ),
     );
   }

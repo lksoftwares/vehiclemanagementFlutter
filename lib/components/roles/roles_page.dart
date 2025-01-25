@@ -321,12 +321,15 @@ class _RolesPageState extends State<RolesPage> {
       if (responseData['dup'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'] ?? 'Role updated successfully')),
+
         );
       } else {
         fetchRoles();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'] ?? 'Role updated  successfully')),
         );
+        Navigator.pop(context);
+
       }
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);

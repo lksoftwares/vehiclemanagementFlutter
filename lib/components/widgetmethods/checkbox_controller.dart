@@ -39,12 +39,10 @@ class CheckboxForm extends StatefulWidget {
 }
 
 class _CheckboxFormState extends State<CheckboxForm> {
-  // Track the state of each checkbox
   bool isChecked1 = false;
   bool isChecked2 = false;
   bool isChecked3 = false;
 
-  // Method to print the checkbox values
   void printCheckboxValues() {
     print('Checkbox 1: $isChecked1');
     print('Checkbox 2: $isChecked2');
@@ -55,7 +53,7 @@ class _CheckboxFormState extends State<CheckboxForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Multiple Checkboxes Example'),
+        title: const Text(' Checkboxes'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -101,39 +99,51 @@ class _CheckboxFormState extends State<CheckboxForm> {
   }
 }
 
-void main() {
-  runApp(MaterialApp(
-    home: CheckboxForm(),
-  ));
-}
-
-
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class CheckboxController extends StatefulWidget {
+  const CheckboxController({super.key});
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<CheckboxController> createState() => _CheckboxControllerState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  bool _isChecked = false;
+class _CheckboxControllerState extends State<CheckboxController> {
+  bool isChecked5 =false;
+  bool isChecked6 = false;
+  bool isChecked7 =false;
 
+  void printCheckboxValues() {
+    print('Checkbox 1: $isChecked5');
+    print('Checkbox 2: $isChecked6');
+    print('Checkbox 3: $isChecked7');
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reusable Checkbox Example'),
-      ),
       body: Center(
-        child: CustomCheckbox(
-          value: _isChecked,
-          onChanged: (bool? newValue) {
-            setState(() {
-              _isChecked = newValue ?? false;
-            });
-          },
-          label: 'Agree to terms and conditions',
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            CustomCheckbox(value: isChecked5, onChanged: (value){
+              setState(() {
+                isChecked5 = value ?? false;
+              });
+            }, label: "checkbox5"),
+            CustomCheckbox(value: isChecked6, onChanged: (value){
+              setState(() {
+                isChecked6=value?? false;
+              });
+            }, label: "checkbox6"),
+            CustomCheckbox(value: isChecked7, onChanged: (value){
+              setState(() {
+                isChecked7=value??false;
+              });
+            }, label: "checkbox7"),
+            ElevatedButton(
+              onPressed: printCheckboxValues,
+              child: const Text('Print Checkbox Values'),
+            ),
+          ],
         ),
       ),
     );
