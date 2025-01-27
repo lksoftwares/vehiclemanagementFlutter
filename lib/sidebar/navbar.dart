@@ -110,6 +110,7 @@ class _NavBarState extends State<NavBar> {
       _updateImage(File(pickedFile.path));
     }
   }
+
   Future<void> _updateImage(File image) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -156,7 +157,6 @@ class _NavBarState extends State<NavBar> {
             gravity: ToastGravity.BOTTOM,
           );
         }
-
         setState(() {
           profileImage = image.path;
         });
@@ -181,8 +181,6 @@ class _NavBarState extends State<NavBar> {
       );
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {

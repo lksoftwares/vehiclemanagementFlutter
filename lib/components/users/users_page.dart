@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';  // Import fluttertoast package
+import '../login/logout _method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
-import '../login/logout _method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 
 class UsersPage extends StatefulWidget {
@@ -21,11 +22,12 @@ class _UsersPageState extends State<UsersPage> {
   String? token;
   String? permissionType;
   int _currentIndex = 0;
-
   bool canRead = false;
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,6 +41,23 @@ class _UsersPageState extends State<UsersPage> {
       });
     });
   }
+
+  List<dynamic> getFilteredUsers() {
+    if (_searchController.text.isEmpty) {
+      return userList;
+    }
+
+    String query = _searchController.text.toLowerCase();
+
+    return userList.where((user) {
+      bool matchesUserName = user['userName'].toLowerCase().contains(query);
+      bool matchesUserEmail = user['userEmail'].toLowerCase().contains(query);
+      bool matchesUserRole = user['userRole'].toLowerCase().contains(query);
+
+      return matchesUserName || matchesUserEmail || matchesUserRole;
+    }).toList();
+  }
+
   Future<void> _getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -48,12 +67,11 @@ class _UsersPageState extends State<UsersPage> {
 
   Future<void> _getPermissionType() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    print(permissionType);
     setState(() {
       permissionType = prefs.getString('selected_permission_type');
 
       if (permissionType == null) {
-        showCustomAlertDialog(context, title: 'Permission Error', content: Text('Permission Type is not found .'), actions: []);
+        showCustomAlertDialog(context, title: 'Permission Error', content: Text('Permission Type is not found.'), actions: []);
         return;
       }
 
@@ -61,11 +79,8 @@ class _UsersPageState extends State<UsersPage> {
       canRead = permissionType!.toString().contains('R');
       canUpdate = permissionType!.toString().contains('U');
       canDelete = permissionType!.toString().contains('D');
-
-
     });
   }
-
 
   Future<void> fetchRoles() async {
     final response = await http.get(Uri.parse('${Config.apiUrl}Role/getallrole'));
@@ -77,15 +92,20 @@ class _UsersPageState extends State<UsersPage> {
         });
       }
     } else {
-      print('Failed to fetch roles');
+      Fluttertoast.showToast(
+          msg: 'Failed to fetch roles',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
     }
   }
 
-
-
   Future<void> fetchData() async {
     if (token == null || !canRead) return;
-
 
     final response = await http.get(
       Uri.parse('${Config.apiUrl}Users/GetAllUsers'),
@@ -104,18 +124,31 @@ class _UsersPageState extends State<UsersPage> {
           isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Failed to fetch users')),
+        Fluttertoast.showToast(
+            msg: data['message'] ?? 'Failed to fetch users',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
       }
     } else {
-      print('Failed to load data: ${response.statusCode}');
+      Fluttertoast.showToast(
+          msg: 'Failed to load data: ${response.statusCode}',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
     }
   }
 
-  Future<void> addUser(String name, String email, String password, ) async {
+  Future<void> addUser(String name, String email, String password) async {
     if (token == null || !canCreate) return;
-
 
     final response = await http.post(
       Uri.parse('${Config.apiUrl}Users/register'),
@@ -133,21 +166,38 @@ class _UsersPageState extends State<UsersPage> {
       Map<String, dynamic> responseData = json.decode(response.body);
 
       if (responseData['dup'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? 'users added successfully')),
+        Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Users added successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
         Navigator.pop(context);
-
       } else {
         fetchData();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? 'users added successfully')),
+        Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Users added successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
       }
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed to add users')),
+      Fluttertoast.showToast(
+          msg: responseData['message'] ?? 'Failed to add users',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
       );
     }
   }
@@ -157,7 +207,7 @@ class _UsersPageState extends State<UsersPage> {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
 
-    final _formKey = GlobalKey<FormState>(); // Add a key to validate the form
+    final _formKey = GlobalKey<FormState>();
 
     if (!canCreate) {
       showCustomAlertDialog(
@@ -249,8 +299,14 @@ class _UsersPageState extends State<UsersPage> {
     String? token = prefs.getString('token');
 
     if (token == null || userId == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid User ID')),
+      Fluttertoast.showToast(
+          msg: 'Invalid User ID',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
       );
       return;
     }
@@ -265,22 +321,30 @@ class _UsersPageState extends State<UsersPage> {
     if (response.statusCode == 200) {
       fetchData();
       Map<String, dynamic> responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-            Text(responseData['message'] ?? 'User deleted successfully')),
+      Fluttertoast.showToast(
+          msg: responseData['message'] ?? 'User deleted successfully',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0
       );
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+      Fluttertoast.showToast(
+          msg: responseData['message'] ?? 'Failed to delete user',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
       );
     }
   }
 
-
   Future<void> updateUser(int userId, String name, String email, String password, int Role_Id) async {
-
     if (token == null || !canUpdate) return;
 
     Map<String, String> requestBody = {
@@ -289,10 +353,6 @@ class _UsersPageState extends State<UsersPage> {
       'User_Password': password,
       'Role_Id': Role_Id.toString(),
     };
-
-    print('Updating user with ID $userId');
-    print('Request Body:');
-    print(requestBody);
 
     final response = await http.put(
       Uri.parse('${Config.apiUrl}Users/updateUser/$userId'),
@@ -306,24 +366,41 @@ class _UsersPageState extends State<UsersPage> {
       Map<String, dynamic> responseData = json.decode(response.body);
 
       if (responseData['dup'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? 'Users updated successfully')),
+        Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Users updated successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
       } else {
         fetchData();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message'] ?? 'Users updated successfully')),
+        Fluttertoast.showToast(
+            msg: responseData['message'] ?? 'Users updated successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
         Navigator.pop(context);
       }
     } else {
       Map<String, dynamic> responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed to update users')),
+      Fluttertoast.showToast(
+          msg: responseData['message'] ?? 'Failed to update users',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
       );
     }
   }
-
 
   void showEditUserDialog(Map<String, dynamic> user) {
     final nameController = TextEditingController(text: user['userName']);
@@ -331,9 +408,10 @@ class _UsersPageState extends State<UsersPage> {
     final passwordController = TextEditingController(text: user['userPassword']);
 
     int? selectedRoleId = roles.firstWhere(
-            (role) => role['roleName'] == user['userRole'],
-        orElse: () => {'roleId': 0}
+          (role) => role['roleName'] == user['userRole'],
+      orElse: () => {'roleId': 0},
     )['roleId'];
+
     if (!canUpdate) {
       showCustomAlertDialog(
         context,
@@ -342,6 +420,7 @@ class _UsersPageState extends State<UsersPage> {
       );
       return;
     }
+
     showCustomAlertDialog(
       context,
       title: 'Edit User',
@@ -394,28 +473,12 @@ class _UsersPageState extends State<UsersPage> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
           child: Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
-            final name = nameController.text;
-            final email = emailController.text;
-            final password = passwordController.text;
-
-            if (name.isNotEmpty &&
-                email.isNotEmpty &&
-                password.isNotEmpty &&
-                selectedRoleId != null) {
-              updateUser(user['userId'], name, email, password, selectedRoleId!);
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please fill all the fields')),
-              );
-            }
+            updateUser(user['userId'], nameController.text, emailController.text, passwordController.text, selectedRoleId ?? 0);
           },
           child: Text('Update'),
         ),
@@ -424,37 +487,23 @@ class _UsersPageState extends State<UsersPage> {
   }
 
   void showDeleteUserDialog(int userId) {
-    if (!canDelete) {
-      showCustomAlertDialog(
-        context,
-        title: 'Permission Denied',
-        content: Text('You do not have permission to delete roles.'), actions: [],
-      );
-      return;
-    }
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Delete User'),
-          content: Text('Are you sure you want to delete this user?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                deleteUser(userId);
-                Navigator.of(context).pop();
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
+    showCustomAlertDialog(
+      context,
+      title: 'Delete User',
+      content: Text('Are you sure you want to delete this user?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            deleteUser(userId);
+            Navigator.of(context).pop();
+          },
+          child: Text('Delete'),
+        ),
+      ],
     );
   }
 
@@ -464,19 +513,30 @@ class _UsersPageState extends State<UsersPage> {
       appBar: CustomAppBar(
         title: 'Users',
         onLogout: () => AuthService.logout(context),
-
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              SizedBox(height: 20),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Users',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Container(
+                    width: 280,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search by UserName, UserEmail and UserRole',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (query) {
+                        setState(() {});
+                      },
+                    ),
                   ),
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.blue, size: 30),
@@ -491,50 +551,14 @@ class _UsersPageState extends State<UsersPage> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(
-                      label: Text(
-                        'Username',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'User Email',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'User Role',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'User Password',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'Edit',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'Delete',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    DataColumn(label: Text('Username', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('User Email', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('User Role', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('User Password', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Edit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Delete', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
                   ],
-                  rows: userList.map((user) {
+                  rows: getFilteredUsers().map((user) {
                     return DataRow(
                       cells: [
                         DataCell(Text(user['userName'] ?? '')),
@@ -547,8 +571,7 @@ class _UsersPageState extends State<UsersPage> {
                         )),
                         DataCell(IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              showDeleteUserDialog(user['userId']),
+                          onPressed: () => showDeleteUserDialog(user['userId']),
                         )),
                       ],
                     );

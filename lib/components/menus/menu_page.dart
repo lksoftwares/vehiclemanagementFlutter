@@ -5,10 +5,10 @@
 // import 'package:image_picker/image_picker.dart';
 // import 'package:http/http.dart' as http;
 // import 'package:shared_preferences/shared_preferences.dart';
+// import '../login/logout _method.dart';
 // import '../widgetmethods/appbar_method.dart';
 // import '../../config.dart';
 // import '../widgetmethods/alert_widget.dart';
-// import '../login/logout _method.dart';
 // import '../widgetmethods/bottomnavigation_method.dart';
 //
 // class MenuPage extends StatefulWidget {
@@ -164,13 +164,14 @@
 //           onPressed: () {
 //             final menuName = _menuNameController.text.trim();
 //
+//             if (menuName.isEmpty) {
+//               ScaffoldMessenger.of(context).showSnackBar(
+//                 SnackBar(content: Text('Menu name cannot be empty')),
+//               );
+//               return;
+//             }
+//
 //             if (menuId == null) {
-//               if (menuName.isEmpty) {
-//                 ScaffoldMessenger.of(context).showSnackBar(
-//                   SnackBar(content: Text('Please fill all fields')),
-//                 );
-//                 return;
-//               }
 //               _addMenu(menuName, _selectedImage, _selectedParentMenuId);
 //             } else {
 //               if (menuName.isEmpty ) {
@@ -183,7 +184,9 @@
 //             }
 //           },
 //           child: Text(menuId == null ? 'Add' : 'Update'),
+//
 //         )
+//
 //       ],
 //     );
 //   }
@@ -212,15 +215,17 @@
 //     );
 //     request.headers['Authorization'] = 'Bearer $token';
 //     request.fields['Menu_Name'] = menuName;
-//     request.fields['Parent_Id'] = parentMenuId.toString();
+//
+//     if (parentMenuId != null) {
+//       request.fields['Parent_Id'] = parentMenuId.toString();
+//     }
 //
 //     if (imageFile != null) {
 //       request.files.add(
 //         await http.MultipartFile.fromPath('IconPath', imageFile.path),
 //       );
 //     }
-//
-//     print("Request data: ${request.fields}");
+// print("parent id $parentMenuId");
 //     final response = await request.send();
 //
 //     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -263,7 +268,6 @@
 //       );
 //     }
 //
-//     print("Request data: ${request.fields}");
 //     final response = await request.send();
 //
 //     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -436,6 +440,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';  // Import Fluttertoast
 import '../login/logout _method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
@@ -451,10 +456,12 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> _menuData = [];
+  List<Map<String, dynamic>> _filteredMenuData = [];
   List<Map<String, dynamic>> _allMenus = [];
   String? _selectedMenuName;
   int? _selectedParentMenuId;
   final TextEditingController _menuNameController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   int? _selectedMenuId;
   File? _selectedImage;
   int _currentIndex = 0;
@@ -487,18 +494,39 @@ class _MenuPageState extends State<MenuPage> {
               'iconUrl': item['iconUrl'],
             };
           }).toList());
+          _filteredMenuData = List<Map<String, dynamic>>.from(_menuData); // Initialize filtered data
           _allMenus = List<Map<String, dynamic>>.from(data['apiResponse']);
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Failed to load menu data')),
+        Fluttertoast.showToast(
+          msg: data['message'] ?? 'Failed to load menu data',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.SNACKBAR,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load menu data')),
+      Fluttertoast.showToast(
+        msg: 'Failed to load menu data',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
     }
+  }
+
+  void _filterMenuData(String query) {
+    final filteredMenus = _menuData.where((menu) {
+      final menuName = menu['menuName'].toLowerCase();
+      final searchQuery = query.toLowerCase();
+      return menuName.contains(searchQuery);
+    }).toList();
+
+    setState(() {
+      _filteredMenuData = filteredMenus;
+    });
   }
 
   void _showMenuDialog({int? menuId, String? currentName, String? currentImage}) {
@@ -596,8 +624,12 @@ class _MenuPageState extends State<MenuPage> {
             final menuName = _menuNameController.text.trim();
 
             if (menuName.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Menu name cannot be empty')),
+              Fluttertoast.showToast(
+                msg: 'Menu name cannot be empty',
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.SNACKBAR,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
               return;
             }
@@ -605,23 +637,14 @@ class _MenuPageState extends State<MenuPage> {
             if (menuId == null) {
               _addMenu(menuName, _selectedImage, _selectedParentMenuId);
             } else {
-              if (menuName.isEmpty ) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Menu name cannot be empty')),
-                );
-                return;
-              }
               _updateMenu(menuId!, menuName, _selectedImage, _selectedParentMenuId);
             }
           },
           child: Text(menuId == null ? 'Add' : 'Update'),
-
         )
-
       ],
     );
   }
-
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -656,7 +679,7 @@ class _MenuPageState extends State<MenuPage> {
         await http.MultipartFile.fromPath('IconPath', imageFile.path),
       );
     }
-print("parent id $parentMenuId");
+
     final response = await request.send();
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -664,14 +687,22 @@ print("parent id $parentMenuId");
       _fetchMenuData();
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(decodedData['message'] ?? 'Menu added successfully')),
+      Fluttertoast.showToast(
+        msg: decodedData['message'] ?? 'Menu added successfully',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
       );
     } else {
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(decodedData['message'] ?? 'Failed')),
+      Fluttertoast.showToast(
+        msg: decodedData['message'] ?? 'Failed',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
     }
   }
@@ -706,14 +737,22 @@ print("parent id $parentMenuId");
       _fetchMenuData();
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(decodedData['message'] ?? 'Menu updated successfully')),
+      Fluttertoast.showToast(
+        msg: decodedData['message'] ?? 'Menu updated successfully',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
       );
     } else {
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(decodedData['message'] ?? 'Failed to update menu')),
+      Fluttertoast.showToast(
+        msg: decodedData['message'] ?? 'Failed to update menu',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
     }
   }
@@ -757,13 +796,21 @@ print("parent id $parentMenuId");
     if (response.statusCode == 200) {
       _fetchMenuData();
       final responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Menu deleted successfully')),
+      Fluttertoast.showToast(
+        msg: responseData['message'] ?? 'Menu deleted successfully',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
       );
     } else {
       final responseData = json.decode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['message'] ?? 'Failed to delete menu')),
+      Fluttertoast.showToast(
+        msg: responseData['message'] ?? 'Failed to delete menu',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.SNACKBAR,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
     }
   }
@@ -773,7 +820,6 @@ print("parent id $parentMenuId");
     super.initState();
     _fetchMenuData();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -786,12 +832,25 @@ print("parent id $parentMenuId");
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              SizedBox(height: 20),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Menus',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+
+                  Container(
+                    width: 280,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search by MenuName',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (query) {
+                        _filterMenuData(query);
+                      },
+                    ),
                   ),
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.blue, size: 30),
@@ -799,8 +858,9 @@ print("parent id $parentMenuId");
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
-              _menuData.isEmpty
+              _filteredMenuData.isEmpty
                   ? Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -811,7 +871,7 @@ print("parent id $parentMenuId");
                     DataColumn(label: Text('Edit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
                     DataColumn(label: Text('Delete', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
                   ],
-                  rows: _menuData.map((item) {
+                  rows: _filteredMenuData.map((item) {
                     return DataRow(cells: [
                       DataCell(
                         CircleAvatar(

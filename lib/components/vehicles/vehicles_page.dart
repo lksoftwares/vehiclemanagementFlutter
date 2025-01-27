@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import 'package:vehiclemanagement/config.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
@@ -25,6 +26,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+  TextEditingController _searchController = TextEditingController();
+  List<Vehicle> _allVehicles = [];
+  List<Vehicle> _filteredVehicles = [];
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +39,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
           _vehiclesFuture = _fetchVehicles();
         }
       });
+    });
+    _searchController.addListener(_filterVehicles);
+  }
+  void _filterVehicles() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredVehicles = _allVehicles
+          .where((vehicle) =>
+          vehicle.ownerName.toLowerCase().contains(query))
+          .toList();
     });
   }
   Future<void> _getToken() async {
@@ -76,6 +91,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       }
     });
   }
+
   Future<List<Vehicle>> _fetchVehicles() async {
     final prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
@@ -107,14 +123,14 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
   void _showAddOrEditVehicleDialog(BuildContext context, {Vehicle? vehicle}) {
     final _vehicleNoController =
-        TextEditingController(text: vehicle?.vehicleNo ?? '');
+    TextEditingController(text: vehicle?.vehicleNo ?? '');
     final _ownerNameController =
-        TextEditingController(text: vehicle?.ownerName ?? '');
+    TextEditingController(text: vehicle?.ownerName ?? '');
     final _contactNumberController =
-        TextEditingController(text: vehicle?.contactNumber ?? '');
+    TextEditingController(text: vehicle?.contactNumber ?? '');
 
     String _vehicleStatus =
-        vehicle?.vehicleStatus == false ? 'Inactive' : 'Active';
+    vehicle?.vehicleStatus == false ? 'Inactive' : 'Active';
     if (!canCreate && !canUpdate) {
       showCustomAlertDialog(
         context,
@@ -203,8 +219,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
             if (_vehicleNoController.text.trim().isEmpty ||
                 _ownerNameController.text.trim().isEmpty ||
                 _contactNumberController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please fill all the fields')),
+              Fluttertoast.showToast(
+                msg: "Please fill all the fields",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
               return;
             }
@@ -212,8 +233,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
             final prefs = await SharedPreferences.getInstance();
             final String? token = prefs.getString('token');
             if (token == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('No token found')),
+              Fluttertoast.showToast(
+                msg: "No token found",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
               return;
             }
@@ -236,24 +262,31 @@ class _VehiclesPageState extends State<VehiclesPage> {
               if (response.statusCode == 200) {
                 Navigator.of(context).pop();
                 Map<String, dynamic> responseData = json.decode(response.body);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(responseData['message'] ??
-                          'Vehicle added successfully')),
+                Fluttertoast.showToast(
+                  msg: responseData['message'] ?? 'Vehicle added successfully',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.green,
+                  textColor: Colors.white,
                 );
                 setState(() {
                   _vehiclesFuture = _fetchVehicles();
                 });
               } else {
                 Map<String, dynamic> responseData = json.decode(response.body);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+                Fluttertoast.showToast(
+                  msg: responseData['message'] ?? 'Failed',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
                 );
               }
             } else {
               final response = await http.put(
-                Uri.parse(
-                    '${Config.apiUrl}Vehicle/updateVehicle/${vehicle.vehicleId}'),
+                Uri.parse('${Config.apiUrl}Vehicle/updateVehicle/${vehicle.vehicleId}'),
                 headers: {
                   'Content-Type': 'application/json',
                   'Authorization': 'Bearer $token',
@@ -269,18 +302,26 @@ class _VehiclesPageState extends State<VehiclesPage> {
               if (response.statusCode == 200) {
                 Navigator.of(context).pop();
                 Map<String, dynamic> responseData = json.decode(response.body);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(responseData['message'] ??
-                          'Vehicle updated successfully')),
+                Fluttertoast.showToast(
+                  msg: responseData['message'] ?? 'Vehicle updated successfully',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.green,
+                  textColor: Colors.white,
                 );
                 setState(() {
                   _vehiclesFuture = _fetchVehicles();
                 });
               } else {
                 Map<String, dynamic> responseData = json.decode(response.body);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+                Fluttertoast.showToast(
+                  msg: responseData['message'] ?? 'Failed',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
                 );
               }
             }
@@ -315,8 +356,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
             final prefs = await SharedPreferences.getInstance();
             final String? token = prefs.getString('token');
             if (token == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('No token found')),
+              Fluttertoast.showToast(
+                msg: "No token found",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
               return;
             }
@@ -329,10 +375,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
             if (response.statusCode == 200) {
               Navigator.of(context).pop();
               Map<String, dynamic> responseData = json.decode(response.body);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(responseData['message'] ??
-                        'Vehicle deleted successfully')),
+              Fluttertoast.showToast(
+                msg: responseData['message'] ?? 'Vehicle deleted successfully',
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
               );
               setState(() {
                 _vehiclesFuture = _fetchVehicles();
@@ -340,8 +389,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
             } else {
               Navigator.of(context).pop();
               Map<String, dynamic> responseData = json.decode(response.body);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(responseData['message'] ?? 'Failed')),
+              Fluttertoast.showToast(
+                msg: responseData['message'] ?? 'Failed',
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
             }
           },
@@ -364,12 +418,20 @@ class _VehiclesPageState extends State<VehiclesPage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              SizedBox(height: 10,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Vehicles',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Container(
+                    width: 280,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search by Owner Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
                   ),
                   IconButton(
                     icon: Icon(Icons.add, color: Colors.blue, size: 30),
