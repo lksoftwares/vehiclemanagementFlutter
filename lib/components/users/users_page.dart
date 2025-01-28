@@ -545,9 +545,31 @@ class _UsersPageState extends State<UsersPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
+              getFilteredUsers().isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 200,),
+                    Text(
+                      'No results found 😞',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Try searching with a different term.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ) : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [

@@ -462,16 +462,15 @@
 //   }
 //
 // }
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
-import 'package:fluttertoast/fluttertoast.dart';  // Import fluttertoast
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../config.dart';
-import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 
 class RolesPage extends StatefulWidget {
@@ -768,7 +767,6 @@ class _RolesPageState extends State<RolesPage> {
         gravity: ToastGravity.SNACKBAR,
         backgroundColor: Colors.red,
         textColor: Colors.white,
-
       );
     }
   }
@@ -904,7 +902,30 @@ class _RolesPageState extends State<RolesPage> {
               ),
               const SizedBox(height: 10),
               filteredRoles.isEmpty
-                  ? Center(child: CircularProgressIndicator())
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 200,),
+                    Text(
+                      'No results found 😞',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Try searching with a different term.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              )
                   : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
@@ -932,22 +953,20 @@ class _RolesPageState extends State<RolesPage> {
                     ),
                   ],
                   rows: filteredRoles
-                      .map((role) =>
-                      DataRow(
-                        cells: [
-                          DataCell(Text(role['roleName'])),
-                          DataCell(IconButton(
-                            icon: Icon(Icons.edit, color: Colors.green),
-                            onPressed: () =>
-                                _showEditRoleModal(
-                                    role['roleId'], role['roleName']),
-                          )),
-                          DataCell(IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _confirmDeleteRole(role['roleId']),
-                          )),
-                        ],
-                      ))
+                      .map((role) => DataRow(
+                    cells: [
+                      DataCell(Text(role['roleName'])),
+                      DataCell(IconButton(
+                        icon: Icon(Icons.edit, color: Colors.green),
+                        onPressed: () =>
+                            _showEditRoleModal(role['roleId'], role['roleName']),
+                      )),
+                      DataCell(IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmDeleteRole(role['roleId']),
+                      )),
+                    ],
+                  ))
                       .toList(),
                 ),
               ),
@@ -966,5 +985,5 @@ class _RolesPageState extends State<RolesPage> {
       ),
     );
   }
-
 }
+

@@ -562,12 +562,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fluttertoast/fluttertoast.dart'; // Import fluttertoast
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import '../../config.dart';
-import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 
 class UsershiftPage extends StatefulWidget {
@@ -778,7 +778,9 @@ class _UsershiftPageState extends State<UsershiftPage> {
             fontSize: 16.0,
           );
         } else {
-          fetchShifts();
+          setState(() {
+            shiftsFuture = fetchShifts(); // Re-fetch shifts after update
+          });
           Fluttertoast.showToast(
             msg: responseData['message'] ?? 'Shift updated successfully',
             toastLength: Toast.LENGTH_SHORT,
@@ -943,7 +945,9 @@ class _UsershiftPageState extends State<UsershiftPage> {
             fontSize: 16.0,
           );
         } else {
-          fetchShifts();
+          setState(() {
+            shiftsFuture = fetchShifts();
+          });
           Fluttertoast.showToast(
             msg: responseData['message'] ?? 'Shift added successfully',
             toastLength: Toast.LENGTH_SHORT,
@@ -969,33 +973,9 @@ class _UsershiftPageState extends State<UsershiftPage> {
       }
     }
 
-    Future<void> selectTime(BuildContext context, bool isStartTime) async {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          if (isStartTime) {
-            startTime = pickedTime;
-          } else {
-            endTime = pickedTime;
-          }
-        });
-      }
-    }
-    if (!canCreate) {
-      showCustomAlertDialog(
-        context,
-        title: 'Permission Denied',
-        content: Text('You do not have permission to add roles.'), actions: [],
-      );
-      return;
-    }
     showCustomAlertDialog(
       context,
-      title: 'Add New Shift',
+      title: 'Add Shift',
       content: SingleChildScrollView(
         child: Column(
           children: [
@@ -1017,7 +997,17 @@ class _UsershiftPageState extends State<UsershiftPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.access_time),
-                  onPressed: () => selectTime(context, true),
+                  onPressed: () async {
+                    final TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (pickedTime != null) {
+                      setState(() {
+                        startTime = pickedTime;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
@@ -1032,7 +1022,17 @@ class _UsershiftPageState extends State<UsershiftPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.access_time),
-                  onPressed: () => selectTime(context, false),
+                  onPressed: () async {
+                    final TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (pickedTime != null) {
+                      setState(() {
+                        endTime = pickedTime;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
@@ -1040,7 +1040,7 @@ class _UsershiftPageState extends State<UsershiftPage> {
               controller: graceTimeController,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                labelText: 'Grace Time(in min)',
+                labelText: 'Grace Time (in min)',
               ),
               keyboardType: TextInputType.number,
             ),
@@ -1117,7 +1117,32 @@ class _UsershiftPageState extends State<UsershiftPage> {
                   List<dynamic> displayedShifts = filteredShifts.isNotEmpty
                       ? filteredShifts
                       : snapshot.data!;
-
+                  if (filteredShifts.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 200,),
+                          Text(
+                            'No results found 😞',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Try searching with a different term.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ) ;
+                  }
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(

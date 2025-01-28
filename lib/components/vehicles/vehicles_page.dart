@@ -442,6 +442,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                 ],
               ),
               const SizedBox(height: 10),
+
               FutureBuilder<List<Vehicle>>(
                 future: _vehiclesFuture,
                 builder: (context, snapshot) {
