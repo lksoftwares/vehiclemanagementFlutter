@@ -569,6 +569,7 @@ import '../../config.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/toast_method.dart';
 
 class UsershiftPage extends StatefulWidget {
   const UsershiftPage({super.key});
@@ -676,14 +677,10 @@ class _UsershiftPageState extends State<UsershiftPage> {
       Navigator.of(context).pop();
       Map<String, dynamic> responseData = json.decode(response.body);
 
-      Fluttertoast.showToast(
-        msg: responseData['message'] ?? 'UserShift deleted successfully',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
+      showToast(
+        msg: responseData['message'] ?? 'UsersShifts deleted successfully',
         backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
+
       );
       setState(() {
         shiftsFuture = fetchShifts();
@@ -692,14 +689,9 @@ class _UsershiftPageState extends State<UsershiftPage> {
       Navigator.of(context).pop();
       Map<String, dynamic> responseData = json.decode(response.body);
 
-      Fluttertoast.showToast(
+      showToast(
         msg: responseData['message'] ?? 'Failed',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
+
       );
     }
   }
@@ -768,40 +760,27 @@ class _UsershiftPageState extends State<UsershiftPage> {
         Map<String, dynamic> responseData = json.decode(response.body);
 
         if (responseData['dup'] == true) {
-          Fluttertoast.showToast(
-            msg: responseData['message'] ?? 'Shift updated successfully',
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
+          showToast(
+            msg: responseData['message'] ?? 'Shifts updated successfully',
             backgroundColor: Colors.green,
-            textColor: Colors.white,
-            fontSize: 16.0,
+
           );
         } else {
           setState(() {
-            shiftsFuture = fetchShifts(); // Re-fetch shifts after update
+            shiftsFuture = fetchShifts();
           });
-          Fluttertoast.showToast(
-            msg: responseData['message'] ?? 'Shift updated successfully',
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
+          showToast(
+            msg: responseData['message'] ?? 'Shifts updated successfully',
             backgroundColor: Colors.green,
-            textColor: Colors.white,
-            fontSize: 16.0,
+
           );
           Navigator.pop(context);
         }
       } else {
         Map<String, dynamic> responseData = json.decode(response.body);
-        Fluttertoast.showToast(
-          msg: responseData['message'] ?? 'Failed to update shift',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
+        showToast(
+          msg: responseData['message'] ?? 'Failed',
+
         );
       }
     }
@@ -935,40 +914,27 @@ class _UsershiftPageState extends State<UsershiftPage> {
         Map<String, dynamic> responseData = json.decode(response.body);
 
         if (responseData['dup'] == true) {
-          Fluttertoast.showToast(
-            msg: responseData['message'] ?? 'Shift added successfully',
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
+          showToast(
+            msg: responseData['message'] ?? 'Shifts added successfully',
             backgroundColor: Colors.green,
-            textColor: Colors.white,
-            fontSize: 16.0,
+
           );
         } else {
           setState(() {
             shiftsFuture = fetchShifts();
           });
-          Fluttertoast.showToast(
-            msg: responseData['message'] ?? 'Shift added successfully',
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
+          showToast(
+            msg: responseData['message'] ?? 'Shifts added successfully',
             backgroundColor: Colors.green,
-            textColor: Colors.white,
-            fontSize: 16.0,
+
           );
           Navigator.pop(context);
         }
       } else {
         Map<String, dynamic> responseData = json.decode(response.body);
-        Fluttertoast.showToast(
-          msg: responseData['message'] ?? 'Failed to add Shift',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
+        showToast(
+          msg: responseData['message'] ?? 'Failed',
+
         );
       }
     }

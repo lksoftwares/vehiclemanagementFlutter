@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'components/login/login_page.dart';
+import 'package:vehiclemanagement/components/splash_screen/splash_screen.dart';
+
+import 'components/widgetmethods/alert_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: LoginPage(),
+      home: Shreya(),
     );
   }
 }

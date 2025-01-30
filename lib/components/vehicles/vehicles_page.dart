@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/toast_method.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -219,13 +220,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
             if (_vehicleNoController.text.trim().isEmpty ||
                 _ownerNameController.text.trim().isEmpty ||
                 _contactNumberController.text.trim().isEmpty) {
-              Fluttertoast.showToast(
-                msg: "Please fill all the fields",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
+              showToast(
+                msg: 'Please fill all the fields',
+
               );
               return;
             }
@@ -233,13 +230,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
             final prefs = await SharedPreferences.getInstance();
             final String? token = prefs.getString('token');
             if (token == null) {
-              Fluttertoast.showToast(
-                msg: "No token found",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
+              showToast(
+                msg:'No token found',
+
               );
               return;
             }
@@ -262,26 +255,19 @@ class _VehiclesPageState extends State<VehiclesPage> {
               if (response.statusCode == 200) {
                 Navigator.of(context).pop();
                 Map<String, dynamic> responseData = json.decode(response.body);
-                Fluttertoast.showToast(
+                showToast(
                   msg: responseData['message'] ?? 'Vehicle added successfully',
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
                   backgroundColor: Colors.green,
-                  textColor: Colors.white,
+
                 );
                 setState(() {
                   _vehiclesFuture = _fetchVehicles();
                 });
               } else {
                 Map<String, dynamic> responseData = json.decode(response.body);
-                Fluttertoast.showToast(
+                showToast(
                   msg: responseData['message'] ?? 'Failed',
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
+
                 );
               }
             } else {
@@ -302,26 +288,19 @@ class _VehiclesPageState extends State<VehiclesPage> {
               if (response.statusCode == 200) {
                 Navigator.of(context).pop();
                 Map<String, dynamic> responseData = json.decode(response.body);
-                Fluttertoast.showToast(
+                showToast(
                   msg: responseData['message'] ?? 'Vehicle updated successfully',
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
                   backgroundColor: Colors.green,
-                  textColor: Colors.white,
+
                 );
                 setState(() {
                   _vehiclesFuture = _fetchVehicles();
                 });
               } else {
                 Map<String, dynamic> responseData = json.decode(response.body);
-                Fluttertoast.showToast(
+                showToast(
                   msg: responseData['message'] ?? 'Failed',
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
+
                 );
               }
             }
@@ -356,13 +335,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
             final prefs = await SharedPreferences.getInstance();
             final String? token = prefs.getString('token');
             if (token == null) {
-              Fluttertoast.showToast(
-                msg: "No token found",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
+              showToast(
+                msg:'No token found',
+
               );
               return;
             }
@@ -375,13 +350,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
             if (response.statusCode == 200) {
               Navigator.of(context).pop();
               Map<String, dynamic> responseData = json.decode(response.body);
-              Fluttertoast.showToast(
+              showToast(
                 msg: responseData['message'] ?? 'Vehicle deleted successfully',
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
                 backgroundColor: Colors.green,
-                textColor: Colors.white,
+
               );
               setState(() {
                 _vehiclesFuture = _fetchVehicles();
@@ -389,13 +361,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
             } else {
               Navigator.of(context).pop();
               Map<String, dynamic> responseData = json.decode(response.body);
-              Fluttertoast.showToast(
+              showToast(
                 msg: responseData['message'] ?? 'Failed',
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
+
               );
             }
           },

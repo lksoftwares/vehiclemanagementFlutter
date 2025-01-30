@@ -1,15 +1,16 @@
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/toast_method.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -63,21 +64,14 @@ class _MenuPageState extends State<MenuPage> {
           _allMenus = List<Map<String, dynamic>>.from(data['apiResponse']);
         });
       } else {
-        Fluttertoast.showToast(
-          msg: data['message'] ?? 'Failed to load menu data',
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.SNACKBAR,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
+        showToast(
+          msg: data['message'] ?? 'Failed to load menus',
+
         );
       }
     } else {
-      Fluttertoast.showToast(
-        msg: 'Failed to load menu data',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showToast(
+        msg: 'Failed to load menu ',
       );
     }
   }
@@ -100,7 +94,7 @@ class _MenuPageState extends State<MenuPage> {
     _selectedMenuId = menuId;
     _selectedImage = null;
     _selectedMenuName = null;
-    _selectedParentMenuId = null;
+    _selectedParentMenuId = 0;
 
     if (menuId != null) {
       final selectedMenu = _allMenus.firstWhere((menu) => menu['menuId'] == menuId);
@@ -110,7 +104,7 @@ class _MenuPageState extends State<MenuPage> {
           ? selectedMenu['pageName']!
           : '';
 
-      if (_selectedParentMenuId != null) {
+      if (_selectedParentMenuId != 0) {
         _selectedMenuName = _allMenus.firstWhere(
                 (menu) => menu['menuId'] == _selectedParentMenuId)['menuName'];
       }
@@ -129,7 +123,7 @@ class _MenuPageState extends State<MenuPage> {
               labelText: 'Enter Menu Name',
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TextField(
             controller: _pageNameController,
             decoration: InputDecoration(
@@ -137,17 +131,21 @@ class _MenuPageState extends State<MenuPage> {
               labelText: 'Enter Page Name',
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedMenuName,
             onChanged: (String? newValue) {
               setState(() {
                 _selectedMenuName = newValue;
-                if (newValue != null) {
-                  _selectedParentMenuId = _allMenus.firstWhere(
-                          (menu) => menu['menuName'] == newValue)['menuId'];
+
+                if (newValue == 'No Parent') {
+                  _selectedParentMenuId = 0;
                 } else {
-                  _selectedParentMenuId = null;
+                  if (newValue != null) {
+                    _selectedParentMenuId = _allMenus.firstWhere(
+                            (menu) => menu['menuName'] == newValue
+                    )['menuId'];
+                  }
                 }
               });
             },
@@ -155,38 +153,48 @@ class _MenuPageState extends State<MenuPage> {
               border: OutlineInputBorder(),
               labelText: 'Select Parent Menu',
             ),
-            items: _allMenus.isEmpty
-                ? [DropdownMenuItem(value: null, child: Text('No Menus Available'))]
-                : _allMenus.map<DropdownMenuItem<String>>((menu) {
-              return DropdownMenuItem<String>(
-                value: menu['menuName'],
-                child: Text(menu['menuName']),
-              );
-            }).toList(),
+            items: [
+              DropdownMenuItem<String>(
+                value: 'No Parent',
+                child: Text('No Parent'),
+              ),
+              ..._allMenus.map<DropdownMenuItem<String>>((menu) {
+                return DropdownMenuItem<String>(
+                  value: menu['menuName'],
+                  child: Text(menu['menuName']),
+                );
+              }).toList(),
+            ],
           ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            onPressed: _pickImage,
-            icon: Icon(Icons.image),
-            label: Text('Select Image'),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: Icon(Icons.image),
+                label: Text('Select Image'),
+              ),
+              const SizedBox(width: 8),
+              if (_selectedImage != null)
+                Image.file(
+                  _selectedImage!,
+                  height: 55,
+                  width: 55,
+                  fit: BoxFit.cover,
+                )
+              else if (currentImage != null)
+                Image.network(
+                  currentImage,
+                  height: 55,
+                  width: 55,
+                  fit: BoxFit.cover,
+                ),
+            ],
           ),
-          const SizedBox(height: 10),
-          if (_selectedImage != null)
-            Image.file(
-              _selectedImage!,
-              height: 55,
-              width: 55,
-              fit: BoxFit.cover,
-            )
-          else if (currentImage != null)
-            Image.network(
-              currentImage,
-              height: 55,
-              width: 55,
-              fit: BoxFit.cover,
-            ),
         ],
       ),
+
       actions: [
         TextButton(
           onPressed: () {
@@ -205,12 +213,9 @@ class _MenuPageState extends State<MenuPage> {
             final pageName = _pageNameController.text.trim();
 
             if (menuName.isEmpty) {
-              Fluttertoast.showToast(
-                msg: 'Menu name cannot be empty',
-                toastLength: Toast.LENGTH_LONG,
-                gravity: ToastGravity.SNACKBAR,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
+              showToast(
+                msg:'Menu Name cannot be empty',
+
               );
               return;
             }
@@ -272,22 +277,17 @@ class _MenuPageState extends State<MenuPage> {
       _fetchMenuData();
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      Fluttertoast.showToast(
+      showToast(
         msg: decodedData['message'] ?? 'Menu added successfully',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
         backgroundColor: Colors.green,
-        textColor: Colors.white,
+
       );
     } else {
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      Fluttertoast.showToast(
+      showToast(
         msg: decodedData['message'] ?? 'Failed',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+
       );
     }
   }
@@ -305,7 +305,6 @@ class _MenuPageState extends State<MenuPage> {
     request.headers['Authorization'] = 'Bearer $token';
     request.fields['Menu_Name'] = menuName;
 
-    // Only add pageName if it's not empty
     if (pageName.isNotEmpty) {
       request.fields['Page_Name'] = pageName;
     }
@@ -327,22 +326,17 @@ class _MenuPageState extends State<MenuPage> {
       _fetchMenuData();
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      Fluttertoast.showToast(
+      showToast(
         msg: decodedData['message'] ?? 'Menu updated successfully',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
         backgroundColor: Colors.green,
-        textColor: Colors.white,
+
       );
     } else {
       final responseData = await response.stream.bytesToString();
       final decodedData = json.decode(responseData);
-      Fluttertoast.showToast(
-        msg: decodedData['message'] ?? 'Failed to update menu',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showToast(
+        msg: decodedData['message'] ?? 'Failed',
+
       );
     }
   }
@@ -386,21 +380,15 @@ class _MenuPageState extends State<MenuPage> {
     if (response.statusCode == 200) {
       _fetchMenuData();
       final responseData = json.decode(response.body);
-      Fluttertoast.showToast(
+      showToast(
         msg: responseData['message'] ?? 'Menu deleted successfully',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
         backgroundColor: Colors.green,
-        textColor: Colors.white,
+
       );
     } else {
       final responseData = json.decode(response.body);
-      Fluttertoast.showToast(
-        msg: responseData['message'] ?? 'Failed to delete menu',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.SNACKBAR,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
+      showToast(
+        msg: responseData['message'] ?? 'Failed',
       );
     }
   }
@@ -410,6 +398,7 @@ class _MenuPageState extends State<MenuPage> {
     super.initState();
     _fetchMenuData();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

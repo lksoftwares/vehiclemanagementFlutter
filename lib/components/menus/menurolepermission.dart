@@ -541,6 +541,7 @@ import '../../config.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/toast_method.dart';
 
 class MenuRolePage extends StatefulWidget {
   @override
@@ -577,8 +578,10 @@ class _MenuRolePageState extends State<MenuRolePage> {
         });
       } else {
         var responseBody = jsonDecode(response.body);
-        String errorMessage = responseBody['message'] ?? 'Failed to add permission';
-        print(errorMessage);
+        showToast(
+          msg: responseBody['message'] ?? 'Failed to fetch roles',
+
+        );
       }
     } catch (e) {
       print("Exception: $e");
@@ -607,7 +610,7 @@ class _MenuRolePageState extends State<MenuRolePage> {
         return menuList;
       } else {
         var responseBody = jsonDecode(response.body);
-        String errorMessage = responseBody['message'] ?? 'Failed to add permission';
+        String errorMessage = responseBody['message'] ?? 'Failed to fetch menus';
         throw Exception(errorMessage);
       }
     } catch (e) {
@@ -621,14 +624,10 @@ class _MenuRolePageState extends State<MenuRolePage> {
     token = prefs.getString('token');
 
     if (selectedPermissions.isEmpty) {
-      Fluttertoast.showToast(
-          msg: 'Select values from dropdown before adding',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.orange,
-          textColor: Colors.white,
-          fontSize: 16.0
+      showToast(
+        msg: 'Select values from the dropdown before adding',
+        backgroundColor: Colors.orange,
+
       );
       return;
     }
@@ -650,38 +649,25 @@ class _MenuRolePageState extends State<MenuRolePage> {
         var responseBody = jsonDecode(response.body);
         String successMessage = responseBody['message'] ?? 'Permissions added successfully';
 
-        Fluttertoast.showToast(
-            msg: successMessage,
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.green,
-            textColor: Colors.white,
-            fontSize: 16.0
+        showToast(
+          msg: successMessage,
+          backgroundColor: Colors.green,
+
         );
       } else {
         var responseBody = jsonDecode(response.body);
         String errorMessage = responseBody['message'] ?? 'Failed to add permissions';
-        Fluttertoast.showToast(
-            msg: errorMessage,
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
+        showToast(
+          msg:errorMessage,
+
         );
       }
     } catch (e) {
       print("Error: $e");
-      Fluttertoast.showToast(
-          msg: 'Error: $e',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.orange,
-          textColor: Colors.white,
-          fontSize: 16.0
+      showToast(
+        msg: 'Error: $e',
+        backgroundColor: Colors.green,
+
       );
     }
   }
@@ -697,14 +683,10 @@ class _MenuRolePageState extends State<MenuRolePage> {
         }
       }
     });
-    Fluttertoast.showToast(
-        msg: 'Permissions reset successfully.',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.blueAccent,
-        textColor: Colors.white,
-        fontSize: 16.0
+    showToast(
+      msg: 'Permissions reset successfully',
+      backgroundColor: Colors.blueAccent,
+
     );
   }
 
@@ -1043,8 +1025,6 @@ class _SubmenuPermissionDropdownState extends State<SubmenuPermissionDropdown> {
         } else {
           print("API response 'isSuccess' is false");
         }
-      } else {
-        print("Failed to load permissions with status code: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching permission types: $e");

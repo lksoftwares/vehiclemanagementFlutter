@@ -790,7 +790,6 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
               ),
             );
           } else {
-            // Show alert if pageName is not found
             showDialog(
               context: context,
               builder: (BuildContext context) {
