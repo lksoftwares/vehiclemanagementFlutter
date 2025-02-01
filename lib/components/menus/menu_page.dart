@@ -10,6 +10,7 @@ import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/no_data_found.dart';
 import '../widgetmethods/toast_method.dart';
 
 class MenuPage extends StatefulWidget {
@@ -437,30 +438,7 @@ class _MenuPageState extends State<MenuPage> {
               ),
               const SizedBox(height: 10),
               _filteredMenuData.isEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 200,),
-                    Text(
-                      'No results found 😞',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Try searching with a different term.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              )
+                  ? NoDataFoundScreen()
                   : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(

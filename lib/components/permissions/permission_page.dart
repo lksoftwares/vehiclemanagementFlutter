@@ -455,6 +455,7 @@ import '../login/logout _method.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/api_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
+import '../widgetmethods/no_data_found.dart';
 import '../widgetmethods/toast_method.dart';
 
 class PermissionPage extends StatefulWidget {
@@ -811,30 +812,7 @@ class _PermissionPageState extends State<PermissionPage> {
                         .toList();
 
                     if (filteredPermissions.isEmpty) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 200,),
-                            Text(
-                              'No results found 😞',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red,
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              'Try searching with a different term.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      return NoDataFoundScreen();
                     }
 
                     return Padding(

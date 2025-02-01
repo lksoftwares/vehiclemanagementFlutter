@@ -9,6 +9,7 @@ import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 import '../widgetmethods/card_widget.dart';
+import '../widgetmethods/no_data_found.dart';
 import '../widgetmethods/toast_method.dart';
 
 class UsersPage extends StatefulWidget {
@@ -48,7 +49,6 @@ class _UsersPageState extends State<UsersPage> {
     if (_searchController.text.isEmpty) {
       return userList;
     }
-
     String query = _searchController.text.toLowerCase();
 
     return userList.where((user) {
@@ -496,41 +496,22 @@ class _UsersPageState extends State<UsersPage> {
               ),
               const SizedBox(height: 10),
               getFilteredUsers().isEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 200),
-                    Text(
-                      'No results found 😞',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Try searching with a different term.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              )
+                  ? NoDataFoundScreen()
                   : Column(
                 children: getFilteredUsers().map((user) {
+
+                  Map<String, String> userFields = {
+                    'Name': user['userName'],
+                    'Email': user['userEmail'],
+                    'Role': user['userRole'],
+                    'Password': user['userPassword'],
+                  };
+
                   return buildUserCard(
-                    name: user['userName'],
-                    email: user['userEmail'],
-                    role: user['userRole'],
-                    password: user['userPassword'],
+                    userFields: userFields,
                     onEdit: () => showEditUserDialog(user),
                     onDelete: () => showDeleteUserDialog(user['userId']),
                   );
-
                 }).toList(),
               ),
             ],
