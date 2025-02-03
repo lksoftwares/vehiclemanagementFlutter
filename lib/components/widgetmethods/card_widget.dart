@@ -14,7 +14,6 @@ Widget buildUserCard({
     if (key != firstKey) {
       fieldRows.add(
         Padding(
-          
           padding: const EdgeInsets.symmetric(vertical: 5.0),
           child: Row(
             children: [

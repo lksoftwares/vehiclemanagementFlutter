@@ -49,6 +49,7 @@ dependencies:
   google_fonts: ^6.2.1
   table_sticky_headers: ^2.0.5
   syncfusion_flutter_datagrid: ^28.2.3
+  flutter_slidable: ^4.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
