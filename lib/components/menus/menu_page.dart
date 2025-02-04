@@ -32,6 +32,7 @@ class _MenuPageState extends State<MenuPage> {
   int? _selectedMenuId;
   File? _selectedImage;
   int _currentIndex = 0;
+  bool isLoading = false;
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -43,6 +44,9 @@ class _MenuPageState extends State<MenuPage> {
     if (token == null) {
       return;
     }
+    setState(() {
+      isLoading = true;
+    });
 
     final response = await http.get(
       Uri.parse('${Config.apiUrl}Menus/GetAllMenu'),
@@ -75,6 +79,9 @@ class _MenuPageState extends State<MenuPage> {
         msg: 'Failed to load menu ',
       );
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void _filterMenuData(String query) {
@@ -437,9 +444,11 @@ class _MenuPageState extends State<MenuPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              _filteredMenuData.isEmpty
-                  ? NoDataFoundScreen()
-                  : SingleChildScrollView(
+              if (isLoading)
+                Center(child: CircularProgressIndicator())
+              else if (_filteredMenuData.isEmpty)
+                NoDataFoundScreen()
+              else SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: const [

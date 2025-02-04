@@ -477,6 +477,7 @@ class _PermissionPageState extends State<PermissionPage> {
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
+
   @override
   void initState() {
     super.initState();
@@ -543,6 +544,7 @@ class _PermissionPageState extends State<PermissionPage> {
       final List<dynamic> data = responseData['apiResponse'];
 
       return data.map((item) => Permission.fromJson(item)).toList();
+
     } else {
       throw Exception('Failed to load permissions');
     }

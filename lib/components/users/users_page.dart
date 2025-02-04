@@ -21,7 +21,6 @@ class _UsersPageState extends State<UsersPage> {
   List<dynamic> userList = [];
   List<dynamic> roles = [];
   int? selectedRoleId;
-  bool isLoading = true;
   String? token;
   String? permissionType;
   int _currentIndex = 0;
@@ -29,6 +28,7 @@ class _UsersPageState extends State<UsersPage> {
   bool canCreate = false;
   bool canUpdate = false;
   bool canDelete = false;
+  bool isLoading = false;
 
   TextEditingController _searchController = TextEditingController();
 
@@ -105,7 +105,9 @@ class _UsersPageState extends State<UsersPage> {
 
   Future<void> fetchData() async {
     if (token == null || !canRead) return;
-
+    setState(() {
+      isLoading = true;
+    });
     final response = await http.get(
       Uri.parse('${Config.apiUrl}Users/GetAllUsers'),
       headers: {
@@ -133,6 +135,9 @@ class _UsersPageState extends State<UsersPage> {
         msg: 'Failed to load data: ${response.statusCode}',
       );
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> addUser(String name, String email, String password) async {
@@ -495,9 +500,11 @@ class _UsersPageState extends State<UsersPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              getFilteredUsers().isEmpty
-                  ? NoDataFoundScreen()
-                  : Column(
+              if (isLoading)
+                Center(child: CircularProgressIndicator())
+              else if (getFilteredUsers().isEmpty)
+                NoDataFoundScreen()
+              else Column(
                 children: getFilteredUsers().map((user) {
 
                   Map<String, String> userFields = {

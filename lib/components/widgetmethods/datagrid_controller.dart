@@ -1,237 +1,133 @@
 //
-// import 'package:flutter/material.dart';
+// import 'package:flutter/cupertino.dart';
 // import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 //
-// class DynamicDataGrid<T> extends StatelessWidget {
-//   final List<Map<String, dynamic>> data;
-//   final List<GridColumn> columns;
-//   final Function(Map<String, dynamic> row)? onEdit;
-//   final Function(Map<String, dynamic> row)? onDelete;
+// List<GridColumn> buildDataGridColumns(List<Map<String, dynamic>> columnsConfig) {
+//   List<GridColumn> columns = [];
 //
-//   DynamicDataGrid({
-//     required this.data,
-//     required this.columns,
-//     this.onEdit,
-//     this.onDelete,
-//   });
+//   for (var config in columnsConfig) {
+//     final columnName = config['columnName'];
+//     final labelText = config['labelText'];
 //
-//   @override
-//   Widget build(BuildContext context) {
-//     return SfDataGrid(
-//       headerGridLinesVisibility: GridLinesVisibility.both,
-//       gridLinesVisibility: GridLinesVisibility.both,
-//       columnWidthMode: ColumnWidthMode.fitByColumnName,
-//       allowSorting: true,
-//       frozenColumnsCount: 1,
-//       source: DynamicDataSource(
-//         data: data,
-//         onEdit: onEdit,
-//         onDelete: onDelete,
+//     columns.add(
+//       GridColumn(
+//         columnName: columnName,
+//         allowSorting: true,
+//         allowFiltering: true,
+//         label: Container(
+//           alignment: Alignment.center,
+//           padding: EdgeInsets.all(8.0),
+//           child: Text(labelText),
+//         ),
 //       ),
-//       allowFiltering: true,
-//       columns: columns,
 //     );
-//   }
-// }
-//
-// class DynamicDataSource extends DataGridSource {
-//   final List<Map<String, dynamic>> data;
-//   final Function(Map<String, dynamic> row)? onEdit;
-//   final Function(Map<String, dynamic> row)? onDelete;
-//
-//   DynamicDataSource({required this.data, this.onEdit, this.onDelete});
-//
-//   @override
-//   List<DataGridRow> get rows => data
-//       .map<DataGridRow>((row) => DataGridRow(cells: row.entries.map((entry) {
-//     return DataGridCell<String>(
-//       columnName: entry.key,
-//       value: entry.value.toString(),
+//     columns.add(
+//       GridColumn(
+//         columnName: columnName,
+//         allowSorting: true,
+//         allowFiltering: true,
+//         label: Container(
+//           alignment: Alignment.center,
+//           padding: EdgeInsets.all(8.0),
+//           child: Text(labelText),
+//         ),
+//       ),
 //     );
-//   }).toList()))
-//       .toList();
-//
-//   @override
-//   DataGridRowAdapter buildRow(DataGridRow row) {
-//     return DataGridRowAdapter(
-//       cells: row.getCells().map<Widget>((cell) {
-//         if (cell.columnName == 'edit' || cell.columnName == 'delete') {
-//           return Container(
-//             alignment: Alignment.center,
-//             child: IconButton(
-//               icon: Icon(
-//                 cell.columnName == 'edit' ? Icons.edit : Icons.delete,
-//                 color: cell.columnName == 'edit' ? Colors.green : Colors.red,
-//               ),
-//               onPressed: () {
-//                 final rowData = {
-//                   for (var cell in row.getCells()) cell.columnName: cell.value,
-//                 };
-//                 if (cell.columnName == 'edit' && onEdit != null) {
-//                   onEdit!(rowData);
-//                 } else if (cell.columnName == 'delete' && onDelete != null) {
-//                   onDelete!(rowData);
-//                 }
-//               },
-//             ),
-//           );
-//         } else {
-//           return Container(
-//             padding: EdgeInsets.all(8.0),
-//             alignment: Alignment.centerLeft,
-//             child: Text(cell.value.toString()),
-//           );
-//         }
-//       }).toList(),
-//     );
-//   }
-// }
-// import 'package:flutter/material.dart';
-// import 'package:syncfusion_flutter_datagrid/datagrid.dart';
-//
-// List<GridColumn> buildColumns(List<String> columnNames) {
-//   return columnNames.map((columnName) {
-//     return GridColumn(
-//       columnName: columnName,
-//       allowSorting: columnName != 'edit' && columnName != 'delete',
-//       allowFiltering: columnName != 'edit' && columnName != 'delete',
+//     columns.add(GridColumn(
+//       columnName: 'edit_$columnName',
+//       allowSorting: false,
+//       allowFiltering: false,
 //       label: Container(
 //         alignment: Alignment.center,
 //         padding: EdgeInsets.all(8.0),
-//         child: Text(columnName),
+//         child: Text('Edit'),
 //       ),
-//     );
-//   }).toList();
-// }
+//     ));
 //
-// class GenericDataSource extends DataGridSource {
-//   final List<Map<String, dynamic>> data;
-//   final List<String> columnNames;
-//   final Function(Map<String, dynamic>) onEdit;
-//   final Function(Map<String, dynamic>) onDelete;
-//
-//   GenericDataSource({
-//     required this.data,
-//     required this.columnNames,
-//     required this.onEdit,
-//     required this.onDelete,
-//   });
-//
-//   @override
-//   List<DataGridRow> get rows => data.map<DataGridRow>((item) {
-//     return DataGridRow(
-//       cells: columnNames.map<DataGridCell>((column) {
-//         return DataGridCell<String>(
-//           columnName: column,
-//           value: item[column] ?? '',
-//         );
-//       }).toList(),
-//     );
-//   }).toList();
-//
-//   @override
-//   DataGridRowAdapter buildRow(DataGridRow row) {
-//     return DataGridRowAdapter(
-//       cells: row.getCells().map<Widget>((cell) {
-//         if (cell.columnName == 'edit') {
-//           return Container(
-//             alignment: Alignment.center,
-//             child: IconButton(
-//               icon: Icon(Icons.edit, color: Colors.green),
-//               onPressed: () {
-//                 final item = row.getCells().asMap();
-//                 final name = item[1]?.value;
-//                 onEdit(name);
-//               },
-//             ),
-//           );
-//         } else if (cell.columnName == 'delete') {
-//           return Container(
-//             alignment: Alignment.center,
-//             child: IconButton(
-//               icon: Icon(Icons.delete, color: Colors.red),
-//               onPressed: () {
-//                 final item = row.getCells().asMap();
-//                 final name = item[1]?.value;
-//                 onDelete(name);
-//               },
-//             ),
-//           );
-//         }
-//         return Container(
-//           padding: EdgeInsets.all(8.0),
-//           alignment: Alignment.centerLeft,
-//           child: Text(cell.value as String),
-//         );
-//       }).toList(),
-//     );
+//     columns.add(GridColumn(
+//       columnName: 'delete_$columnName',
+//       allowSorting: false,
+//       allowFiltering: false,
+//       label: Container(
+//         alignment: Alignment.center,
+//         padding: EdgeInsets.all(8.0),
+//         child: Text('Delete'),
+//       ),
+//     ));
+//     columns.add(GridColumn(
+//       columnName: 'delete_$columnName',
+//       allowSorting: false,
+//       allowFiltering: false,
+//       label: Container(
+//         alignment: Alignment.center,
+//         padding: EdgeInsets.all(8.0),
+//         child: Text('Delete'),
+//       ),
+//     ));
 //   }
+//   return columns;
 // }
 import 'package:flutter/cupertino.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+import 'datagrid_class.dart';
 
-List<GridColumn> buildDataGridColumns(List<Map<String, dynamic>> columnsConfig) {
+List<GridColumn> buildDataGridColumns(List<ColumnConfig> columnsConfig) {
   List<GridColumn> columns = [];
 
   for (var config in columnsConfig) {
-    final columnName = config['columnName'];
-    final labelText = config['labelText'];
-
     columns.add(
       GridColumn(
-        columnName: columnName,
-        allowSorting: true,
-        allowFiltering: true,
+        columnName: config.columnName,
+        allowSorting: config.allowSorting,
+        allowFiltering: config.allowFiltering,
+        columnWidthMode: config.columnWidthMode,
+        allowEditing: config.allowEditing,
+        visible: config.visible,
         label: Container(
           alignment: Alignment.center,
           padding: EdgeInsets.all(8.0),
-          child: Text(labelText),
+          child: Text(config.labelText),
         ),
       ),
     );
-    columns.add(
-      GridColumn(
-        columnName: columnName,
-        allowSorting: true,
-        allowFiltering: true,
-        label: Container(
-          alignment: Alignment.center,
-          padding: EdgeInsets.all(8.0),
-          child: Text(labelText),
-        ),
-      ),
-    );
-    columns.add(GridColumn(
-      columnName: 'edit_$columnName',
-      allowSorting: false,
-      allowFiltering: false,
-      label: Container(
-        alignment: Alignment.center,
-        padding: EdgeInsets.all(8.0),
-        child: Text('Edit'),
-      ),
-    ));
-
-    columns.add(GridColumn(
-      columnName: 'delete_$columnName',
-      allowSorting: false,
-      allowFiltering: false,
-      label: Container(
-        alignment: Alignment.center,
-        padding: EdgeInsets.all(8.0),
-        child: Text('Delete'),
-      ),
-    ));
-    columns.add(GridColumn(
-      columnName: 'delete_$columnName',
-      allowSorting: false,
-      allowFiltering: false,
-      label: Container(
-        alignment: Alignment.center,
-        padding: EdgeInsets.all(8.0),
-        child: Text('Delete'),
-      ),
-    ));
   }
+
+  // Checkbox Column
+  columns.add(GridColumn(
+    columnName: 'checkbox',
+    visible: true,
+    allowSorting: false,
+    allowFiltering: false,
+    label: Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.all(8.0),
+      child: Text('Select'),
+    ),
+  ));
+
+  // Edit Column
+  columns.add(GridColumn(
+    columnName: 'edit',
+    allowSorting: false,
+    allowFiltering: false,
+    label: Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.all(8.0),
+      child: Text('Edit'),
+    ),
+  ));
+
+  // Delete Column
+  columns.add(GridColumn(
+    columnName: 'delete',
+    allowSorting: false,
+    allowFiltering: false,
+    label: Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.all(8.0),
+      child: Text('Delete'),
+    ),
+  ));
+
   return columns;
 }
