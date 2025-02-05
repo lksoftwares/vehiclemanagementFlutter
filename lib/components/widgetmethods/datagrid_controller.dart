@@ -92,10 +92,9 @@ List<GridColumn> buildDataGridColumns(List<ColumnConfig> columnsConfig) {
     );
   }
 
-  // Checkbox Column
   columns.add(GridColumn(
     columnName: 'checkbox',
-    visible: true,
+    visible: false,
     allowSorting: false,
     allowFiltering: false,
     label: Container(
@@ -105,8 +104,7 @@ List<GridColumn> buildDataGridColumns(List<ColumnConfig> columnsConfig) {
     ),
   ));
 
-  // Edit Column
-  columns.add(GridColumn(
+    columns.add(GridColumn(
     columnName: 'edit',
     allowSorting: false,
     allowFiltering: false,
@@ -117,7 +115,6 @@ List<GridColumn> buildDataGridColumns(List<ColumnConfig> columnsConfig) {
     ),
   ));
 
-  // Delete Column
   columns.add(GridColumn(
     columnName: 'delete',
     allowSorting: false,
