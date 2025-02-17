@@ -8,6 +8,7 @@ import '../../config.dart';
 import '../login/logout _method.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
 import '../widgetmethods/alert_widget.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 import '../widgetmethods/datagrid_class.dart';
 import '../widgetmethods/datagrid_controller.dart';
@@ -120,45 +121,36 @@ class _RolesPageState extends State<RolesPage> {
 
   Future<void> fetchRoles() async {
     if (token == null || !canRead) return;
+
     setState(() {
       isLoading = true;
     });
-    try {
-      final response = await http.get(
-        Uri.parse('${Config.apiUrl}Role/GetAllRole'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'Role/GetAllRole',
+      tokenRequired: true,
+    );
 
-        if (data['statusCode'] == 200 && data['apiResponse'] != null) {
-          setState(() {
-            roles = List<Map<String, dynamic>>.from(
-              data['apiResponse'].map((role) => {
-                'roleId': role['roleId'] ?? 0,
-                'roleName': role['roleName'] ?? 'Unknown Role',
-              }),
-            );
-            filteredRoles = roles;
-            dropdownOptions = ['Admin', 'User', 'Manager'];
-          });
-        } else {
-          showToast(msg: data['message'] ?? 'Failed to load roles');
-        }
-      } else {
-        showToast(msg: 'Failed to fetch roles. Server error.');
-      }
-    } catch (e) {
-      showToast(msg: 'Error fetching roles: $e');
+    if (response['statusCode'] == 200 && response['apiResponse'] != null) {
+      setState(() {
+        roles = List<Map<String, dynamic>>.from(
+          response['apiResponse'].map((role) => {
+            'roleId': role['roleId'] ?? 0,
+            'roleName': role['roleName'] ?? 'Unknown Role',
+          }),
+        );
+        filteredRoles = roles;
+        dropdownOptions = ['Admin', 'User', 'Manager'];
+      });
+    } else {
+      showToast(msg: response['message'] ?? 'Failed to load roles');
     }
     setState(() {
       isLoading = false;
     });
   }
+
   void _confirmDeleteRole(int roleId) {
     if (!canDelete) {
       showCustomAlertDialog(
@@ -190,22 +182,23 @@ class _RolesPageState extends State<RolesPage> {
     );
   }
 
+
   Future<void> _deleteRole(int roleId) async {
     if (token == null || !canDelete) return;
 
-    final response = await http.delete(
-      Uri.parse('${Config.apiUrl}Role/DeleteRole/$roleId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await ApiService.request(
+      method: 'delete',
+      endpoint: 'Role/DeleteRole/$roleId',
+      tokenRequired: true,
 
-    if (response.statusCode == 200) {
-      showToast(msg: 'Role deleted successfully');
+    );
+    if (response['statusCode'] == 200) {
+      String message = response['message'] ?? 'role deleted successfully';
+      showToast(msg: message , backgroundColor: Colors.green);
       fetchRoles();
     } else {
-      showToast(msg: 'Failed to delete role');
+      String message = response['message'] ?? 'Failed to delete role';
+      showToast(msg: message);
     }
   }
   void _showAddRoleModal() {
@@ -255,42 +248,36 @@ class _RolesPageState extends State<RolesPage> {
 
   Future<void> _addRole(String roleName, int permissionId) async {
     if (token == null || !canCreate) return;
-
-    final response = await http.post(
-      Uri.parse('${Config.apiUrl}Role/AddRole'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({
+    final response = await ApiService.request(
+      method: 'post',
+      endpoint: 'Role/AddRole',
+      tokenRequired: true,
+      body: {
         'roleName': roleName,
         'permissionId': permissionId,
-      }),
+      },
     );
-
-    if (response.statusCode == 200) {
-      Map<String, dynamic> responseData = json.decode(response.body);
-
-      if (responseData['dup'] == true) {
+    if (response.isNotEmpty && response['statusCode'] == 200) {
+      if (response['dup'] == true) {
         showToast(
-          msg: responseData['message'] ?? 'Role added successfully',
+          msg: response['message'] ?? 'Role added successfully',
           backgroundColor: Colors.green,
         );
       } else {
         fetchRoles();
         showToast(
-          msg: responseData['message'] ?? 'Role added successfully',
+          msg: response['message'] ?? 'Role added successfully',
           backgroundColor: Colors.green,
         );
         Navigator.pop(context);
       }
     } else {
-      Map<String, dynamic> responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'Failed to add role',
+        msg: response['message'] ?? 'Failed to add role',
       );
     }
   }
+
   void _showEditRoleModal(int roleId, String roleName) {
     if (!canUpdate) {
       showCustomAlertDialog(
@@ -335,43 +322,37 @@ class _RolesPageState extends State<RolesPage> {
 
   Future<void> _updateRole(int roleId, String roleName) async {
     if (token == null || !canUpdate) return;
+    final response = await ApiService.request(
+      method: 'put',
+      endpoint: 'Role/UpdateRole/$roleId',
+      tokenRequired: true,
 
-    final response = await http.put(
-      Uri.parse('${Config.apiUrl}Role/UpdateRole/$roleId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({
+      body: {
         'roleName': roleName,
-      }),
+      },
     );
-
-    if (response.statusCode == 200) {
-      Map<String, dynamic> responseData = json.decode(response.body);
-
-      if (responseData['dup'] == true) {
+    if (response.isNotEmpty && response['statusCode'] == 200) {
+      if (response['dup'] == true) {
         showToast(
-          msg: responseData['message'] ?? 'Role updated successfully',
+          msg: response['message'] ?? 'Role updated successfully',
           backgroundColor: Colors.green,
         );
         Navigator.pop(context);
       } else {
         fetchRoles();
         showToast(
-          msg: responseData['message'] ?? 'Role updated successfully',
+          msg: response['message'] ?? 'Role updated successfully',
           backgroundColor: Colors.green,
         );
         Navigator.pop(context);
-
       }
     } else {
-      Map<String, dynamic> responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'Failed to update role',
+        msg: response['message'] ?? 'Failed to update role',
       );
     }
   }
+
 
   void _printSelectedRoleIds() {
     final selectedRows = _dataGridController.selectedRows;
@@ -576,7 +557,6 @@ class RoleDataSource extends DataGridSource {
           },
         ),
       ),
-      // Edit button
       Container(
         alignment: Alignment.center,
         child: IconButton(
@@ -598,6 +578,8 @@ class RoleDataSource extends DataGridSource {
     ]);
   }
 }
+
+
 // import 'dart:convert';
 // import 'package:flutter/material.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
@@ -606,11 +588,10 @@ class RoleDataSource extends DataGridSource {
 // import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 // import '../../config.dart';
 // import '../login/logout _method.dart';
-// import 'package:syncfusion_flutter_core/theme.dart';
+// import 'package:grid_controller/grid_controller.dart';
 // import '../widgetmethods/alert_widget.dart';
 // import '../widgetmethods/bottomnavigation_method.dart';
-// import '../widgetmethods/datagrid_class.dart';
-// import '../widgetmethods/datagrid_controller.dart';
+// import 'package:syncfusion_flutter_core/theme.dart';
 // import '../widgetmethods/no_data_found.dart';
 // import '../widgetmethods/toast_method.dart';
 //
@@ -633,11 +614,7 @@ class RoleDataSource extends DataGridSource {
 //   int _currentIndex = 0;
 //   TextEditingController _searchController = TextEditingController();
 //   List<String> dropdownOptions = [];
-//   DataGridController _dataGridController = DataGridController();
 //   bool isLoading = false;
-//
-//   int _currentPage = 0;
-//   int _recordsPerPage = 5;
 //
 //   List<ColumnConfig> getColumnsConfig() {
 //     return [
@@ -648,18 +625,7 @@ class RoleDataSource extends DataGridSource {
 //         allowFiltering: true,
 //         visible: true,
 //       ),
-//       ColumnConfig(
-//           columnName: 'role',
-//           labelText: 'RoleName',
-//           visible: false,
-//           columnWidthMode: ColumnWidthMode.auto
-//       ),
-//       ColumnConfig(
-//           columnName: 'rolesName',
-//           labelText: 'Role dropdown',
-//           visible: true,
-//           allowFiltering: true
-//       ),
+//
 //     ];
 //   }
 //
@@ -687,7 +653,6 @@ class RoleDataSource extends DataGridSource {
 //
 //     setState(() {
 //       filteredRoles = filtered;
-//       _currentPage = 0;
 //     });
 //   }
 //
@@ -740,8 +705,7 @@ class RoleDataSource extends DataGridSource {
 //         if (data['statusCode'] == 200 && data['apiResponse'] != null) {
 //           setState(() {
 //             roles = List<Map<String, dynamic>>.from(
-//               data['apiResponse'].map((role) =>
-//               {
+//               data['apiResponse'].map((role) => {
 //                 'roleId': role['roleId'] ?? 0,
 //                 'roleName': role['roleName'] ?? 'Unknown Role',
 //               }),
@@ -812,7 +776,6 @@ class RoleDataSource extends DataGridSource {
 //       showToast(msg: 'Failed to delete role');
 //     }
 //   }
-//
 //   void _showAddRoleModal() {
 //     if (!canCreate) {
 //       showCustomAlertDialog(
@@ -896,133 +859,6 @@ class RoleDataSource extends DataGridSource {
 //       );
 //     }
 //   }
-//
-//   void _showEditRoleModal(int roleId, String roleName) {
-//     if (!canUpdate) {
-//       showCustomAlertDialog(
-//         context,
-//         title: 'Permission Denied',
-//         content: Text('You do not have permission to edit roles.'),
-//         actions: [],
-//       );
-//       return;
-//     }
-//
-//     TextEditingController _editRoleNameController = TextEditingController(
-//         text: roleName);
-//
-//     showCustomAlertDialog(
-//       context,
-//       title: 'Edit Role',
-//       content: TextField(
-//         controller: _editRoleNameController,
-//         decoration: InputDecoration(
-//           labelText: 'Role Name',
-//           border: OutlineInputBorder(),
-//         ),
-//       ),
-//       actions: [
-//         TextButton(
-//           onPressed: () => Navigator.pop(context),
-//           child: Text('Cancel'),
-//         ),
-//         ElevatedButton(
-//           onPressed: () {
-//             if (_editRoleNameController.text.isEmpty) {
-//               showToast(msg: 'Role name cannot be empty');
-//             } else {
-//               _updateRole(roleId, _editRoleNameController.text);
-//             }
-//           },
-//           child: Text('Update'),
-//         ),
-//       ],
-//     );
-//   }
-//
-//   Future<void> _updateRole(int roleId, String roleName) async {
-//     if (token == null || !canUpdate) return;
-//
-//     final response = await http.put(
-//       Uri.parse('${Config.apiUrl}Role/UpdateRole/$roleId'),
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Authorization': 'Bearer $token',
-//       },
-//       body: json.encode({
-//         'roleName': roleName,
-//       }),
-//     );
-//
-//     if (response.statusCode == 200) {
-//       Map<String, dynamic> responseData = json.decode(response.body);
-//
-//       if (responseData['dup'] == true) {
-//         showToast(
-//           msg: responseData['message'] ?? 'Role updated successfully',
-//           backgroundColor: Colors.green,
-//         );
-//         Navigator.pop(context);
-//       } else {
-//         fetchRoles();
-//         showToast(
-//           msg: responseData['message'] ?? 'Role updated successfully',
-//           backgroundColor: Colors.green,
-//         );
-//         Navigator.pop(context);
-//       }
-//     } else {
-//       Map<String, dynamic> responseData = json.decode(response.body);
-//       showToast(
-//         msg: responseData['message'] ?? 'Failed to update role',
-//       );
-//     }
-//   }
-//
-//   void _printSelectedRoleIds() {
-//     final selectedRows = _dataGridController.selectedRows;
-//
-//     if (selectedRows.isEmpty) {
-//       showToast(msg: 'No roles selected');
-//       return;
-//     }
-//
-//     final selectedRoleIds = selectedRows.map((row) {
-//       return row.getCells()[1].value;
-//     }).toList();
-//
-//     print('Selected Role IDs: $selectedRoleIds');
-//     showToast(msg: 'Selected Role IDs: $selectedRoleIds',
-//         backgroundColor: Colors.green);
-//   }
-//
-//   void _paginateData() {
-//     final startIndex = _currentPage * _recordsPerPage;
-//     final endIndex = startIndex + _recordsPerPage;
-//     setState(() {
-//       filteredRoles = roles.sublist(
-//           startIndex, endIndex > roles.length ? roles.length : endIndex);
-//     });
-//   }
-//
-//   void _onNextPage() {
-//     if (_currentPage < (roles.length / _recordsPerPage).floor()) {
-//       setState(() {
-//         _currentPage++;
-//         _paginateData();
-//       });
-//     }
-//   }
-//
-//   void _onPreviousPage() {
-//     if (_currentPage > 0) {
-//       setState(() {
-//         _currentPage--;
-//         _paginateData();
-//       });
-//     }
-//   }
-//
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -1059,72 +895,23 @@ class RoleDataSource extends DataGridSource {
 //               SizedBox(height: 20),
 //               if (isLoading)
 //                 Center(child: CircularProgressIndicator())
+//               else if (filteredRoles.isEmpty)
+//                 NoDataFoundScreen()
 //               else
-//                 if (filteredRoles.isEmpty)
-//                   NoDataFoundScreen()
-//                 else
-//                   Column(
-//                     children: [
-//                       Container(
-//                         height: 480,
-//                         child: SfDataGridTheme(
-//                           data: SfDataGridThemeData(
-//                             headerColor: Colors.blueAccent[100],
-//                           ),
-//                           child: SfDataGrid(
-//                             stackedHeaderRows: <StackedHeaderRow>[
-//                               StackedHeaderRow(cells: [
-//                                 StackedHeaderCell(
-//                                     columnNames: [
-//                                       'roleName',
-//                                       "role",
-//                                       "rolesName"
-//                                     ],
-//                                     child: Container(
-//                                         color: const Color(0xFFF1F1F1),
-//                                         child: Center(
-//                                             child: Text('Roles Details')))),
-//                               ])
-//                             ],
-//                             headerGridLinesVisibility: GridLinesVisibility.both,
-//                             gridLinesVisibility: GridLinesVisibility.both,
-//                             showCheckboxColumn: true,
-//                             allowSorting: true,
-//                             frozenColumnsCount: 2,
-//                             allowSwiping: true,
-//                             source: RoleDataSource(
-//                               roles: filteredRoles,
-//                               onEditRole: _showEditRoleModal,
-//                               onDeleteRole: _confirmDeleteRole,
-//                               dropdownOptions: dropdownOptions,
-//                             ),
-//                             allowFiltering: true,
-//                             columns: buildDataGridColumns(getColumnsConfig()),
-//                             controller: _dataGridController,
-//                           ),
+//                 Column(
+//                   children: [
+//                     Container(
+//                       height: 480,
+//                       child: DataGridWidget(
+//                         columnsConfig: getColumnsConfig(),
+//                         dataGridSource: RoleDataSource(
+//                           roles: filteredRoles,
+//                           dropdownOptions: dropdownOptions,
 //                         ),
 //                       ),
-//                       // Pagination controls
-//                       Row(
-//                         mainAxisAlignment: MainAxisAlignment.center,
-//                         children: [
-//                           IconButton(
-//                             icon: Icon(Icons.arrow_back),
-//                             onPressed: _onPreviousPage,
-//                           ),
-//                           Text('Page ${_currentPage + 1}'),
-//                           IconButton(
-//                             icon: Icon(Icons.arrow_forward),
-//                             onPressed: _onNextPage,
-//                           ),
-//                         ],
-//                       ),
-//                       ElevatedButton(
-//                         onPressed: _printSelectedRoleIds,
-//                         child: Text('Print Selected Role IDs'),
-//                       ),
-//                     ],
-//                   ),
+//                     ),
+//                   ],
+//                 ),
 //             ],
 //           ),
 //         ),
@@ -1140,20 +927,16 @@ class RoleDataSource extends DataGridSource {
 //       ),
 //     );
 //   }
-//
 // }
+//
 // class RoleDataSource extends DataGridSource {
 //   final List<Map<String, dynamic>> roles;
-//   final Function(int roleId, String roleName) onEditRole;
-//   final Function(int roleId) onDeleteRole;
 //   final List<String> dropdownOptions;
 //   final Map<int, String> _selectedRoleValue = {};
 //   final Map<int, bool> _selectedRoleCheckbox = {};
 //
 //   RoleDataSource({
 //     required this.roles,
-//     required this.onEditRole,
-//     required this.onDeleteRole,
 //     required this.dropdownOptions,
 //   }) {
 //     for (var role in roles) {
@@ -1162,19 +945,17 @@ class RoleDataSource extends DataGridSource {
 //   }
 //
 //   @override
-//   List<DataGridRow> get rows {
-//     return roles.map<DataGridRow>((role) {
-//       return DataGridRow(cells: [
-//         DataGridCell<String>(columnName: 'roleName', value: role['roleName']),
-//         DataGridCell<int>(columnName: 'roleId', value: role['roleId']),
-//         DataGridCell<String>(columnName: 'dropdown', value: _selectedRoleValue[role['roleId']] ?? dropdownOptions[0]),
-//         DataGridCell<bool>(
-//           columnName: 'checkbox',
-//           value: _selectedRoleCheckbox[role['roleId']] ?? false,
-//         ),
-//       ]);
-//     }).toList();
-//   }
+//   List<DataGridRow> get rows => roles.map<DataGridRow>((role) {
+//     return DataGridRow(cells: [
+//       DataGridCell<String>(columnName: 'roleName', value: role['roleName']),
+//       DataGridCell<int>(columnName: 'roleId', value: role['roleId']),
+//       DataGridCell<String>(columnName: 'roleDropdown', value: _selectedRoleValue[role['roleId']] ?? dropdownOptions[0]),
+//       DataGridCell<bool>(
+//         columnName: 'checkbox',
+//         value: _selectedRoleCheckbox[role['roleId']] ?? false,
+//       ),
+//     ]);
+//   }).toList();
 //
 //   @override
 //   DataGridRowAdapter buildRow(DataGridRow row) {
@@ -1188,61 +969,7 @@ class RoleDataSource extends DataGridSource {
 //         padding: EdgeInsets.all(8.0),
 //         alignment: Alignment.centerLeft,
 //         child: Text(roleName),
-//       ),
-//       Container(
-//         padding: EdgeInsets.all(8.0),
-//         alignment: Alignment.centerLeft,
-//         child: Text(roleName),
-//       ),
-//       Container(
-//         padding: EdgeInsets.all(8.0),
-//         alignment: Alignment.centerLeft,
-//         child: DropdownButton<String>(
-//           value: dropdownValue,
-//           onChanged: (String? newValue) {
-//             if (newValue != null) {
-//               _selectedRoleValue[roleId] = newValue;
-//               notifyListeners();
-//             }
-//           },
-//           items: dropdownOptions.map<DropdownMenuItem<String>>((String value) {
-//             return DropdownMenuItem<String>(
-//               value: value,
-//               child: Text(value),
-//             );
-//           }).toList(),
-//         ),
-//       ),
-//       Container(
-//         padding: EdgeInsets.all(8.0),
-//         alignment: Alignment.center,
-//         child: Checkbox(
-//           value: checkboxValue,
-//           onChanged: (bool? newValue) {
-//             if (newValue != null) {
-//               _selectedRoleCheckbox[roleId] = newValue;
-//               notifyListeners();
-//             }
-//           },
-//         ),
-//       ),
-//       Container(
-//         alignment: Alignment.center,
-//         child: IconButton(
-//           icon: Icon(Icons.edit, color: Colors.green),
-//           onPressed: () {
-//             onEditRole(roleId, roleName);
-//           },
-//         ),
-//       ),
-//       Container(
-//         alignment: Alignment.center,
-//         child: IconButton(
-//           icon: Icon(Icons.delete, color: Colors.red),
-//           onPressed: () {
-//             onDeleteRole(roleId);
-//           },
-//         ),
+//
 //       ),
 //     ]);
 //   }

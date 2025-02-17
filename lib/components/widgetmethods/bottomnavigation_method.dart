@@ -1,87 +1,12 @@
-// import 'package:flutter/material.dart';
-// import 'package:vehiclemanagement/components/roles/roles_page.dart';
-// import 'package:vehiclemanagement/components/vehicles/vehicles_page.dart';
-// import 'package:vehiclemanagement/components/menus/menu_page.dart';
-//
-//
-// import '../menus/menuswithsubmenu.dart';
-//
-// class BottomNavBar extends StatelessWidget {
-//   final int currentIndex;
-//   final BuildContext context;
-//
-//   const BottomNavBar({
-//     Key? key,
-//     required this.currentIndex,
-//     required this.context,
-//   }) : super(key: key);
-//
-//   void _onItemTapped(int index) {
-//     switch (index) {
-//       case 0:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
-//         );
-//         break;
-//       case 1:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => RolesPage()),
-//         );
-//         break;
-//       case 2:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => VehiclesPage()),
-//         );
-//         break;
-//       case 3:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => MenuPage()),
-//         );
-//         break;
-//       default:
-//       // Add any additional navigation logic if needed
-//         break;
-//     }
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return BottomNavigationBar(
-//       type: BottomNavigationBarType.fixed,
-//       currentIndex: currentIndex,
-//       onTap: _onItemTapped,
-//       items: const [
-//         BottomNavigationBarItem(
-//           icon: Icon(Icons.home),
-//           label: 'Home',
-//         ),
-//         BottomNavigationBarItem(
-//           icon: Icon(Icons.supervised_user_circle_sharp),
-//           label: 'Roles',
-//         ),
-//         BottomNavigationBarItem(
-//           icon: Icon(Icons.car_repair),
-//           label: 'Vehicles',
-//         ),
-//         BottomNavigationBarItem(
-//           icon: Icon(Icons.menu),
-//           label: 'Menus',
-//         ),
-//       ],
-//     );
-//   }
-// }
-import 'package:flutter/material.dart';
-import 'package:vehiclemanagement/components/permissions/permission_page.dart';
-import 'package:vehiclemanagement/components/roles/roles_page.dart';
-import 'package:vehiclemanagement/components/vehicles/vehicles_page.dart';
-import 'package:vehiclemanagement/components/menus/menu_page.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:vehiclemanagement/components/permissions/permission_page.dart';
+import 'package:vehiclemanagement/components/menus/menu_page.dart';
 import '../menus/menuswithsubmenu.dart';
+import '../permissions/permission_bloc.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -100,29 +25,47 @@ class BottomNavBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
+        // );
+        Get.to(Menuswithsubmenu());
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PermissionPage()),
+          MaterialPageRoute(builder: (context) => BlocProvider<PermissionBloc>(
+            create: (_) => PermissionBloc(),
+            child: PermissionPage(),
+          )),
         );
+
         break;
+      // case 2:
+      //   // Navigator.push(
+      //   //   context,
+      //   //   MaterialPageRoute(builder: (context) => VehiclesPage()),
+      //   // );
+      //   Get.to(VehiclesPage());
+      //
+      //   break;
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => VehiclesPage()),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => MenuPage()),
+        // );
+        Get.to(MenuPage());
+
         break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MenuPage()),
-        );
-        break;
+      // case 4:
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(builder: (context) => BlocProvider<VehicleBloc>(
+      //       create: (_) => VehicleBloc(),
+      //       child: VehicleNewpage(),
+      //     )),
+      //   );
+      //   break;
       default:
         break;
     }
@@ -145,13 +88,88 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.car_repair,size: 30),
-          label: 'Vehicles',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu,size: 30),
           label: 'Menus',
         ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.menu,size: 30),
+        //   label: 'Menus',
+        // ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.menu,size: 30),
+        //   label: 'NEw',
+        // ),
       ],
     );
   }
 }
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:get/get.dart';
+// import 'package:get/get_core/src/get_main.dart';
+// import 'package:vehiclemanagement/components/permissions/permission_page.dart';
+//
+// import 'package:vehiclemanagement/components/menus/menu_page.dart';
+// import '../menus/menuswithsubmenu.dart';
+// import '../permissions/permission_bloc.dart';
+//
+// class BottomNavBar extends StatelessWidget {
+//   final int currentIndex;
+//   final BuildContext context;
+//   final Function(int) onItemTapped;
+//
+//   const BottomNavBar({
+//     Key? key,
+//     required this.currentIndex,
+//     required this.context,
+//     required this.onItemTapped,
+//   }) : super(key: key);
+//
+//   void _onItemTapped(int index) {
+//     onItemTapped(index);
+//
+//     switch (index) {
+//       case 0:
+//         Get.toNamed('/home');
+//         break;
+//       case 1:
+//         Get.toNamed('/roles');
+//         break;
+//       case 2:
+//         Get.toNamed('/menus');
+//         break;
+//       default:
+//         break;
+//     }
+//   }
+//   @override
+//   Widget build(BuildContext context) {
+//     return BottomNavigationBar(
+//       type: BottomNavigationBarType.fixed,
+//       currentIndex: currentIndex,
+//       onTap: _onItemTapped,
+//       items: const [
+//         BottomNavigationBarItem(
+//           icon: Icon(Icons.home,size: 30),
+//           label: 'Home',
+//         ),
+//         BottomNavigationBarItem(
+//           icon: Icon(Icons.people,size: 30,),
+//           label: 'Roles',
+//         ),
+//         BottomNavigationBarItem(
+//           icon: Icon(Icons.car_repair,size: 30),
+//           label: 'Menus',
+//         ),
+//         // BottomNavigationBarItem(
+//         //   icon: Icon(Icons.menu,size: 30),
+//         //   label: 'Menus',
+//         // ),
+//         // BottomNavigationBarItem(
+//         //   icon: Icon(Icons.menu,size: 30),
+//         //   label: 'NEw',
+//         // ),
+//       ],
+//     );
+//   }
+// }

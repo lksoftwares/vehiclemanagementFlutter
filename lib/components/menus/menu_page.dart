@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
@@ -47,42 +48,35 @@ class _MenuPageState extends State<MenuPage> {
     setState(() {
       isLoading = true;
     });
-
-    final response = await http.get(
-      Uri.parse('${Config.apiUrl}Menus/GetAllMenu'),
-      headers: {'Authorization': 'Bearer $token'},
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'Menus/GetAllMenu',
+      tokenRequired: true,
     );
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['statusCode'] == 200 && data['isSuccess']) {
-        setState(() {
-          _menuData = List<Map<String, dynamic>>.from(data['apiResponse'].map((item) {
-            return {
-              'menuId': item['menuId'],
-              'menuName': item['menuName'],
-              'iconPath': item['iconPath'],
-              'iconUrl': item['iconUrl'],
-            };
-          }).toList());
-          _filteredMenuData = List<Map<String, dynamic>>.from(_menuData);
-          _allMenus = List<Map<String, dynamic>>.from(data['apiResponse']);
-        });
-      } else {
-        showToast(
-          msg: data['message'] ?? 'Failed to load menus',
-
-        );
-      }
+    if (response['statusCode'] == 200 && response['isSuccess']) {
+      setState(() {
+        _menuData = List<Map<String, dynamic>>.from(response['apiResponse'].map((item) {
+          return {
+            'menuId': item['menuId'],
+            'menuName': item['menuName'],
+            'iconPath': item['iconPath'],
+            'iconUrl': item['iconUrl'],
+          };
+        }).toList());
+        _filteredMenuData = List<Map<String, dynamic>>.from(_menuData);
+        _allMenus = List<Map<String, dynamic>>.from(response['apiResponse']);
+      });
     } else {
       showToast(
-        msg: 'Failed to load menu ',
+        msg: response['message'] ?? 'Failed to load menus',
       );
     }
+
     setState(() {
       isLoading = false;
     });
   }
+
 
   void _filterMenuData(String query) {
     final filteredMenus = _menuData.where((menu) {
@@ -373,33 +367,30 @@ class _MenuPageState extends State<MenuPage> {
       },
     );
   }
-
   Future<void> _deleteMenu(int menuId) async {
     final token = await _getToken();
     if (token == null) {
       return;
     }
-
-    final response = await http.delete(
-      Uri.parse('${Config.apiUrl}Menus/deleteMenu/$menuId'),
-      headers: {'Authorization': 'Bearer $token'},
+    final response = await ApiService.request(
+      method: 'delete',
+      endpoint: 'Menus/deleteMenu/$menuId',
+      tokenRequired: true,
     );
 
-    if (response.statusCode == 200) {
+    if (response['statusCode'] == 200) {
       _fetchMenuData();
-      final responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'Menu deleted successfully',
+        msg: response['message'] ?? 'Menu deleted successfully',
         backgroundColor: Colors.green,
-
       );
     } else {
-      final responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'Failed',
+        msg: response['message'] ?? 'Failed to delete menu',
       );
     }
   }
+
 
   @override
   void initState() {

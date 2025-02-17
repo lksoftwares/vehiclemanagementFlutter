@@ -4,58 +4,22 @@ import 'package:vehiclemanagement/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static Future<Map<String, dynamic>?> request(String method,
-      String endpoint, {
-        Map<String, dynamic>? body,
-      }) async {
-    String? token = await _getToken();
-    if (token == null) {
-      return {'message': 'No token found'};
-    }
-
-    try {
-      late http.Response response;
-
-      switch (method.toUpperCase()) {
-        case 'GET':
-          response = await http.get(
-            Uri.parse('${Config.apiUrl}$endpoint'),
-            headers: {'Authorization': 'Bearer $token'},
-          );
-          break;
-        case 'POST':
-          response = await http.post(
-            Uri.parse('${Config.apiUrl}$endpoint'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode(body),
-          );
-          break;
-        case 'PUT':
-          response = await http.put(
-            Uri.parse('${Config.apiUrl}$endpoint'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode(body),
-          );
-          break;
-        case 'DELETE':
-          response = await http.delete(
-            Uri.parse('${Config.apiUrl}$endpoint'),
-            headers: {'Authorization': 'Bearer $token'},
-          );
-          break;
-        default:
-          return {'message': 'Invalid HTTP method'};
+  static Future<Map<String, dynamic>> request({
+    required String method,
+    required String endpoint,
+    Map<String, dynamic>? body,
+    bool tokenRequired = false,
+  }) async {
+    if (tokenRequired) {
+      final token = await _getToken();
+      if (token == null) {
+        return {
+          'message': 'Token is required but not found.',
+        };
       }
-
-      return _handleResponse(response);
-    } catch (e) {
-      return {'message': 'Error: $e'};
+      return _sendRequestWithToken(method, endpoint, body, token);
+    } else {
+      return _sendRequestWithoutToken(method, endpoint, body);
     }
   }
 
@@ -64,15 +28,187 @@ class ApiService {
     return prefs.getString('token');
   }
 
-  static Map<String, dynamic> _handleResponse(http.Response response) {
-    if (response.statusCode == 200) {
-      try {
-        return json.decode(response.body);
-      } catch (e) {
-        return {'message': 'Error parsing response'};
+  static Map<String, String> _getHeaders(String token) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+
+    };
+  }
+
+  static Future<Map<String, dynamic>> _sendRequestWithToken(
+      String method, String endpoint, Map<String, dynamic>? body, String token) async {
+    try {
+      final uri = Uri.parse('${Config.apiUrl}$endpoint');
+      final headers = _getHeaders(token);
+      final requestBody = body != null ? json.encode(body) : null;
+      return await _sendRequest(method, uri, headers, requestBody);
+    } catch (e) {
+      return {
+        'message': 'Check Your Api',
+      };
+    }
+  }
+  static Future<Map<String, dynamic>> _sendRequestWithoutToken(
+      String method, String endpoint, Map<String, dynamic>? body) async {
+    try {
+      final uri = Uri.parse('${Config.apiUrl}$endpoint');
+      final headers = {
+        'Content-Type': 'application/json',
+      };
+      final requestBody = body != null ? json.encode(body) : null;
+      return await _sendRequest(method, uri, headers, requestBody);
+    } catch (e) {
+      return {
+        'message': 'Check Your Api',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> _sendRequest(
+      String method, Uri uri, Map<String, String> headers, String? body) async {
+    try {
+      http.Response response;
+      switch (method.toLowerCase()) {
+        case 'get':
+          response = await http.get(uri, headers: headers);
+          break;
+        case 'post':
+          response = await http.post(uri, headers: headers, body: body);
+          break;
+        case 'put':
+          response = await http.put(uri, headers: headers, body: body);
+          break;
+        case 'delete':
+          response = await http.delete(uri, headers: headers, body: body);
+          break;
+        default:
+          return {
+            'statusCode': 400,
+            'message': 'Invalid HTTP method.',
+          };
       }
-    } else {
-      return {'message': 'Server error. Status code: ${response.statusCode}'};
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      return {
+        'statusCode': 500,
+        'message': 'Check Your API',
+      };
     }
   }
 }
+
+//
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
+// import 'package:vehiclemanagement/config.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+//
+// class ApiService {
+//   static Future<Map<String, dynamic>> request({
+//     required String method,
+//     required String endpoint,
+//     Map<String, dynamic>? body,
+//     bool tokenRequired = false,
+//     Map<String, String>? customHeaders,
+//   }) async {
+//     if (tokenRequired) {
+//       final token = await _getToken();
+//       if (token == null) {
+//         return {
+//           'message': 'Token is required but not found.',
+//         };
+//       }
+//       return _sendRequestWithToken(method, endpoint, body, token, customHeaders);
+//     } else {
+//       return _sendRequestWithoutToken(method, endpoint, body, customHeaders);
+//     }
+//   }
+//
+//   static Future<String?> _getToken() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     return prefs.getString('token');
+//   }
+//
+//   static Map<String, String> _getHeaders(String token, Map<String, String>? customHeaders) {
+//     final headers = {
+//       'Authorization': 'Bearer $token',
+//     };
+//     if (customHeaders != null) {
+//       headers.addAll(customHeaders);
+//     }
+//     return headers;
+//   }
+//
+//   static Future<Map<String, dynamic>> _sendRequestWithToken(
+//       String method, String endpoint, Map<String, dynamic>? body, String token, Map<String, String>? customHeaders) async {
+//     try {
+//       final uri = Uri.parse('${Config.apiUrl}$endpoint');
+//       final headers = _getHeaders(token, customHeaders);
+//       final requestBody = body != null ? json.encode(body) : null;
+//       return await _sendRequest(method, uri, headers, requestBody);
+//     } catch (e) {
+//       return {
+//         'message': 'Check Your Api',
+//       };
+//     }
+//   }
+//
+//   static Future<Map<String, dynamic>> _sendRequestWithoutToken(
+//       String method, String endpoint, Map<String, dynamic>? body, Map<String, String>? customHeaders) async {
+//     try {
+//       final uri = Uri.parse('${Config.apiUrl}$endpoint');
+//       final headers = customHeaders ?? {
+//         'Content-Type': 'application/json',
+//       };
+//       final requestBody = body != null ? json.encode(body) : null;
+//       return await _sendRequest(method, uri, headers, requestBody);
+//     } catch (e) {
+//       return {
+//         'message': 'Check Your Api',
+//       };
+//     }
+//   }
+//
+//   static Future<Map<String, dynamic>> _sendRequest(
+//       String method, Uri uri, Map<String, String> headers, String? body) async {
+//     try {
+//       http.Response response;
+//       switch (method.toLowerCase()) {
+//         case 'get':
+//           response = await http.get(uri, headers: headers);
+//           break;
+//         case 'post':
+//           response = await http.post(uri, headers: headers, body: body);
+//           break;
+//         case 'put':
+//           response = await http.put(uri, headers: headers, body: body);
+//           break;
+//         case 'delete':
+//           response = await http.delete(uri, headers: headers, body: body);
+//           break;
+//         default:
+//           return {
+//             'statusCode': 400,
+//             'message': 'Invalid HTTP method.',
+//           };
+//       }
+//
+//       if (response.statusCode == 200) {
+//         return json.decode(response.body);
+//       } else {
+//         return json.decode(response.body);
+//       }
+//     } catch (e) {
+//       return {
+//         'statusCode': 500,
+//         'message': 'Check Your API',
+//       };
+//     }
+//   }
+// }

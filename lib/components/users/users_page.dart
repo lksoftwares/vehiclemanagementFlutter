@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../widgetmethods/alert_widget.dart';
@@ -105,19 +106,19 @@ class _UsersPageState extends State<UsersPage> {
 
   Future<void> fetchData() async {
     if (token == null || !canRead) return;
+
     setState(() {
       isLoading = true;
     });
-    final response = await http.get(
-      Uri.parse('${Config.apiUrl}Users/GetAllUsers'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': '*/*',
-      },
+
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'Users/GetAllUsers',
+      tokenRequired: true,
     );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+    if (response['statusCode'] == 200) {
+      final data = response;
 
       if (data['isSuccess'] == true) {
         setState(() {
@@ -127,14 +128,14 @@ class _UsersPageState extends State<UsersPage> {
       } else {
         showToast(
           msg: data['message'] ?? 'Failed to fetch users',
-
         );
       }
     } else {
       showToast(
-        msg: 'Failed to load data: ${response.statusCode}',
+        msg: 'Failed to load data: ${response['statusCode']}',
       );
     }
+
     setState(() {
       isLoading = false;
     });
@@ -274,7 +275,6 @@ class _UsersPageState extends State<UsersPage> {
       ],
     );
   }
-
   Future<void> deleteUser(int userId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -282,31 +282,23 @@ class _UsersPageState extends State<UsersPage> {
     if (token == null || userId == 0) {
       showToast(
         msg: 'Invalid User ID',
-
       );
       return;
     }
-
-    final response = await http.delete(
-      Uri.parse('${Config.apiUrl}Users/deleteUser/$userId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    final response = await ApiService.request(
+      method: 'delete',
+      endpoint: 'Users/deleteUser/$userId',
+      tokenRequired: true,
     );
-
-    if (response.statusCode == 200) {
+    if (response['statusCode'] == 200) {
       fetchData();
-      Map<String, dynamic> responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'User deleted successfully',
+        msg: response['message'] ?? 'User deleted successfully',
         backgroundColor: Colors.green,
-
       );
     } else {
-      Map<String, dynamic> responseData = json.decode(response.body);
       showToast(
-        msg: responseData['message'] ?? 'Failed to delete user',
-
+        msg: response['message'] ?? 'Failed to delete user',
       );
     }
   }

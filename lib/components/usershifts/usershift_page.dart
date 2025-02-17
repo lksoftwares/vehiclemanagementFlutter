@@ -568,6 +568,7 @@ import 'package:vehiclemanagement/components/widgetmethods/appbar_method.dart';
 import '../../config.dart';
 import '../login/logout _method.dart';
 import '../widgetmethods/alert_widget.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 import '../widgetmethods/no_data_found.dart';
 import '../widgetmethods/toast_method.dart';
@@ -631,21 +632,18 @@ class _UsershiftPageState extends State<UsershiftPage> {
       canDelete = permissionType!.toString().contains('D');
     });
   }
-
   Future<List<dynamic>> fetchShifts() async {
     if (token == null || !canRead) {
-      throw Exception('error');
+      throw Exception('Token is required or read permission is denied');
     }
-
-    final response = await http.get(
-      Uri.parse('${Config.apiUrl}UsersShift/GetAllShifts'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'UsersShift/GetAllShifts',
+      tokenRequired: true,
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
+    if (response['statusCode'] == 200) {
+      final Map<String, dynamic> data = response;
       allShifts = List.from(data['apiResponse']);
       filteredShifts = List.from(allShifts);
       return filteredShifts;
@@ -653,6 +651,7 @@ class _UsershiftPageState extends State<UsershiftPage> {
       throw Exception('Failed to load shifts');
     }
   }
+
 
   void filterShifts(String query) {
     setState(() {
@@ -664,38 +663,30 @@ class _UsershiftPageState extends State<UsershiftPage> {
   }
 
   Future<void> deleteShift(int shiftId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    if (token == null || !canDelete) return;
 
-    final response = await http.delete(
-      Uri.parse('${Config.apiUrl}UsersShift/deleteShift/$shiftId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    final response = await ApiService.request(
+      method: 'delete',
+      endpoint: 'UsersShift/deleteShift/$shiftId',
+      tokenRequired: true,
     );
-
-    if (response.statusCode == 200) {
+    if (response['statusCode'] == 200) {
       Navigator.of(context).pop();
-      Map<String, dynamic> responseData = json.decode(response.body);
-
       showToast(
-        msg: responseData['message'] ?? 'UsersShifts deleted successfully',
+        msg: response['message'] ?? 'Shift deleted successfully',
         backgroundColor: Colors.green,
-
       );
       setState(() {
         shiftsFuture = fetchShifts();
       });
     } else {
       Navigator.of(context).pop();
-      Map<String, dynamic> responseData = json.decode(response.body);
-
       showToast(
-        msg: responseData['message'] ?? 'Failed',
-
+        msg: response['message'] ?? 'Failed to delete shift',
       );
     }
   }
+
 
   void confirmDelete(int shiftId) {
     if (!canDelete) {
@@ -764,7 +755,6 @@ class _UsershiftPageState extends State<UsershiftPage> {
           showToast(
             msg: responseData['message'] ?? 'Shifts updated successfully',
             backgroundColor: Colors.green,
-
           );
         } else {
           setState(() {

@@ -72,22 +72,25 @@
 //       return;
 //     }
 //
+//     String authorizationValue = 'Basic ' + base64Encode(utf8.encode('$username:$password'));
+//
 //     final Map<String, String> loginData = {
-//       'User_Email': username,
-//       'User_Password': password,
-//       'Role_Id': roleId,
+//       'Role_Id': roleId.toString(),
 //     };
 //
 //     try {
 //       final response = await http.post(
 //         Uri.parse('${Config.apiUrl}Users/Login'),
-//         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+//         headers: {
+//           'Content-Type': 'application/x-www-form-urlencoded',
+//           'Authorization': authorizationValue,
+//         },
 //         body: loginData,
 //       );
 //
 //       if (response.statusCode == 200) {
 //         final data = json.decode(response.body);
-// print(response.body);
+//         print(response.body);
 //         if (data['statusCode'] == 200 && data['apiResponse'] != null) {
 //           final apiResponse = data['apiResponse'];
 //
@@ -100,7 +103,6 @@
 //             await prefs.setInt('role_Id', apiResponse['role_Id']);
 //             await prefs.setString('role_Name', apiResponse['role_Name']);
 //             await prefs.setString('user_Name', apiResponse['user_Name']);
-//
 //
 //             Navigator.pushReplacement(
 //               context,
@@ -118,7 +120,6 @@
 //             );
 //           }
 //         } else {
-//
 //           var responseBody = jsonDecode(response.body);
 //           String successMessage = responseBody['message'] ?? 'Failed';
 //
@@ -128,7 +129,6 @@
 //               backgroundColor: Colors.red,
 //             ),
 //           );
-//
 //         }
 //       } else {
 //         var responseBody = jsonDecode(response.body);
@@ -156,7 +156,6 @@
 //     return Scaffold(
 //       appBar: CustomAppBar(
 //         title: 'Login Now',
-//
 //       ),
 //       body: Padding(
 //         padding: const EdgeInsets.all(20.0),
@@ -181,33 +180,43 @@
 //                   height: 200,
 //                 ),
 //                 SizedBox(height: 20),
-//                 DropdownButtonFormField<String>(
-//                   value: _selectedRole,
-//                   hint: Text('Select Role'),
-//                   onChanged: (newValue) {
+//                 // Autocomplete for Role Selection
+//                 Autocomplete<String>(
+//                   optionsBuilder: (TextEditingValue textEditingValue) {
+//                     return roles
+//                         .where((role) => role['roleName']
+//                         .toLowerCase()
+//                         .contains(textEditingValue.text.toLowerCase()))
+//                         .map<String>((role) => role['roleName'])
+//                         .toList();
+//                   },
+//                   onSelected: (selectedRole) {
 //                     setState(() {
-//                       _selectedRole = newValue;
+//                       _selectedRole = roles
+//                           .firstWhere((role) => role['roleName'] == selectedRole)['roleId']
+//                           .toString();
 //                     });
 //                   },
-//                   validator: (value) {
-//                     if (value == null || value.isEmpty) {
-//                       return 'Please select a role';
-//                     }
-//                     return null;
-//                   },
-//                   items: roles.map<DropdownMenuItem<String>>((role) {
-//                     return DropdownMenuItem<String>(
-//                       value: role['roleId'].toString(),
-//                       child: Text(role['roleName']),
+//                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+//                     return TextFormField(
+//                       controller: controller,
+//                       focusNode: focusNode,
+//                       onEditingComplete: onEditingComplete,
+//                       decoration: InputDecoration(
+//                         labelText: 'Search Role',
+//                         border: OutlineInputBorder(
+//                           borderRadius: BorderRadius.circular(10),
+//                         ),
+//                         prefixIcon: Icon(Icons.group),
+//                       ),
+//                       validator: (value) {
+//                         if (value == null || value.isEmpty) {
+//                           return 'Please select a role';
+//                         }
+//                         return null;
+//                       },
 //                     );
-//                   }).toList(),
-//                   decoration: InputDecoration(
-//                     labelText: 'Role',
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                     prefixIcon: Icon(Icons.group),
-//                   ),
+//                   },
 //                 ),
 //                 SizedBox(height: 20),
 //                 UsernameTextField(
@@ -310,15 +319,14 @@
 //     }
 //   }
 // }
-import 'package:flutter/material.dart';
+
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vehiclemanagement/components/widgetmethods/textfield_widget.dart';
+import 'package:vehiclemanagement/all_files.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../menus/menuswithsubmenu.dart';
 import '../register/register_page.dart';
-import 'package:vehiclemanagement/config.dart';
+import '../widgetmethods/toast_method.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -342,38 +350,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _fetchRoles() async {
-    try {
-      final response = await http.get(Uri.parse('${Config.apiUrl}Role/GetAllRole'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['statusCode'] == 200 && data['apiResponse'] != null) {
-          setState(() {
-            roles = data['apiResponse'];
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to load roles: Invalid response format'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Check your API'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'Role/GetAllRole',
+    );
+    if (response['statusCode'] == 200 && response['apiResponse'] != null) {
+      setState(() {
+        roles = List<Map<String, dynamic>>.from(
+          response['apiResponse'].map((role) => {
+            'roleId': role['roleId'] ?? 0,
+            'roleName': role['roleName'] ?? 'Unknown Role',
+          }),
+        );
+      });
+    } else {
+      showToast(msg: response['message'] ?? 'Failed to load roles');
     }
   }
-
   Future<void> _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
     final roleId = _selectedRole;
-
     if (username.isEmpty || password.isEmpty || roleId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -390,19 +388,17 @@ class _LoginPageState extends State<LoginPage> {
       'Role_Id': roleId,
     };
 
-    try {
       final response = await http.post(
         Uri.parse('${Config.apiUrl}Users/Login'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers: {'Content-Type': 'application/x-www-form-urlencoded',
+        },
         body: loginData,
       );
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print(response.body);
         if (data['statusCode'] == 200 && data['apiResponse'] != null) {
           final apiResponse = data['apiResponse'];
-
           final token = apiResponse['token'];
 
           if (token != null) {
@@ -412,8 +408,6 @@ class _LoginPageState extends State<LoginPage> {
             await prefs.setInt('role_Id', apiResponse['role_Id']);
             await prefs.setString('role_Name', apiResponse['role_Name']);
             await prefs.setString('user_Name', apiResponse['user_Name']);
-
-
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
@@ -429,37 +423,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
           }
-        } else {
-          var responseBody = jsonDecode(response.body);
-          String successMessage = responseBody['message'] ?? 'Failed';
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(successMessage),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
-      } else {
-        var responseBody = jsonDecode(response.body);
-        String successMessage = responseBody['message'] ?? 'Failed';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Check Your API'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
-  }
 
   @override
   Widget build(BuildContext context) {

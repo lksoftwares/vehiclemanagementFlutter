@@ -573,6 +573,7 @@
 // }
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vehiclemanagement/components/permissions/permission_page.dart';
@@ -584,6 +585,7 @@ import 'package:vehiclemanagement/sidebar/navbar.dart';
 import '../../config.dart';
 import '../login/login_page.dart';
 import '../login/logout _method.dart';
+import '../permissions/permission_bloc.dart';
 import '../widgetmethods/appbar_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 import 'menu_page.dart';
@@ -600,16 +602,18 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
   List<dynamic> menuData = [];
   bool isLoading = true;
   int _currentIndex = 0;
-  Map<String, Widget Function()> pageMap = {
-    'RolesPage': () => RolesPage(),
-    'UsersPage': () => UsersPage(),
-    'PermissionPage': () => PermissionPage(),
-    'MenuRolePage': () => MenuRolePage(),
-    'UsershiftPage': () => UsershiftPage(),
-    'VehiclesPage': () => VehiclesPage(),
-    'MenuPage': () => MenuPage(),
+  Map<String, Widget Function(BuildContext)> pageMap = {
+    'RolesPage': (context) => RolesPage(),
+    'UsersPage': (context) => UsersPage(),
+    'PermissionPage': (context) => BlocProvider<PermissionBloc>(
+      create: (_) => PermissionBloc(),
+      child: PermissionPage(),
+    ),
+    'MenuRolePage': (context) => MenuRolePage(),
+    'UsershiftPage': (context) => UsershiftPage(),
+    'VehiclesPage': (context) => VehiclesPage(),
+    'MenuPage': (context) => MenuPage(),
   };
-
   @override
   void initState() {
     super.initState();
@@ -786,10 +790,11 @@ class _MenuswithsubmenuState extends State<Menuswithsubmenu> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => pageMap[pageName]!(),
+                builder: (context) => pageMap[pageName]!(context),
               ),
             );
-          } else {
+          }
+          else {
             showDialog(
               context: context,
               builder: (BuildContext context) {

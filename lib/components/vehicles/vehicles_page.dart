@@ -7,6 +7,7 @@ import 'package:vehiclemanagement/config.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../widgetmethods/alert_widget.dart';
 import '../login/logout _method.dart';
+import '../widgetmethods/api_method.dart';
 import '../widgetmethods/bottomnavigation_method.dart';
 import '../widgetmethods/toast_method.dart';
 
@@ -94,33 +95,29 @@ class _VehiclesPageState extends State<VehiclesPage> {
   }
 
   Future<List<Vehicle>> _fetchVehicles() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('token');
-    if (token == null || !canRead) {
-      throw Exception('error');
-    }
-
-    final response = await http.get(
-      Uri.parse('${Config.apiUrl}Vehicle/GetAllVehicle'),
-      headers: {'Authorization': 'Bearer $token'},
+    if (token == null || !canUpdate) {
+      throw Exception('Token is required or read permission is denied');
+    };
+    final response = await ApiService.request(
+      method: 'get',
+      endpoint: 'Vehicle/GetAllVehicle',
+      tokenRequired: true,
     );
 
-    if (response.statusCode == 200) {
-      Map<String, dynamic> responseData = json.decode(response.body);
-
-      if (responseData['isSuccess'] == true) {
-        List<dynamic> vehiclesData = responseData['apiResponse'];
-
+    if (response['statusCode'] == 200) {
+      if (response['isSuccess'] == true) {
+        List<dynamic> vehiclesData = response['apiResponse'];
         return vehiclesData
             .map((vehicle) => Vehicle.fromJson(vehicle))
             .toList();
       } else {
-        throw Exception(responseData['message'] ?? 'Failed to load vehicles');
+        throw Exception(response['message'] ?? 'Failed to load vehicles');
       }
     } else {
       throw Exception('Failed to load vehicles');
     }
   }
+
 
   void _showAddOrEditVehicleDialog(BuildContext context, {Vehicle? vehicle}) {
     final _vehicleNoController =
@@ -332,38 +329,25 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ),
         ElevatedButton(
           onPressed: () async {
-            final prefs = await SharedPreferences.getInstance();
-            final String? token = prefs.getString('token');
-            if (token == null) {
-              showToast(
-                msg:'No token found',
-
-              );
-              return;
-            }
-
-            final response = await http.delete(
-              Uri.parse('${Config.apiUrl}Vehicle/deleteVehicle/$vehicleId'),
-              headers: {'Authorization': 'Bearer $token'},
+            if (token == null || !canDelete) return;
+            final response = await ApiService.request(
+              method: 'delete',
+              endpoint: 'Vehicle/deleteVehicle/$vehicleId',
+              tokenRequired: true,
             );
-
-            if (response.statusCode == 200) {
+            if (response['statusCode'] == 200) {
               Navigator.of(context).pop();
-              Map<String, dynamic> responseData = json.decode(response.body);
               showToast(
-                msg: responseData['message'] ?? 'Vehicle deleted successfully',
+                msg: response['message'] ?? 'Vehicle deleted successfully',
                 backgroundColor: Colors.green,
-
               );
               setState(() {
                 _vehiclesFuture = _fetchVehicles();
               });
             } else {
               Navigator.of(context).pop();
-              Map<String, dynamic> responseData = json.decode(response.body);
               showToast(
-                msg: responseData['message'] ?? 'Failed',
-
+                msg: response['message'] ?? 'Failed to delete vehicle',
               );
             }
           },

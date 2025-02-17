@@ -1,202 +1,302 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vehiclemanagement/components/splash_screen/splash_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
-void main() {
-  runApp(const MyApp());
+void printIpAddress() async {
+  try {
+    var interfaces = await NetworkInterface.list();
+    for (var interface in interfaces) {
+      for (var addr in interface.addresses) {
+        print('IP Address: ${addr.address}');
+      }
+    }
+  } catch (e) {
+    print("Error fetching IP address: $e");
+  }
+}
+
+Future<String> getDeviceId() async {
+  final deviceInfoPlugin = DeviceInfoPlugin();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  const uuid = Uuid();
+
+  String deviceId = prefs.getString('deviceId') ?? '';
+
+  if (deviceId.isEmpty) {
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfoPlugin.androidInfo;
+        deviceId = uuid.v4();
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfoPlugin.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? uuid.v4();
+      }
+    } catch (e) {
+      print("Error fetching generating device ID: $e");
+      deviceId = uuid.v4();
+    }
+    await prefs.setString('deviceId', deviceId);
+  }
+  return deviceId;
+}
+
+Future<void> getCurrentLocation() async {
+  LocationPermission permission = await Geolocator.requestPermission();
+  if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    print('Current location: Latitude: ${position.latitude}, Longitude: ${position.longitude}');
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    if (placemarks.isNotEmpty) {
+      Placemark placemark = placemarks.first;
+      print('Address: ${placemark.street}, ${placemark.name},${placemark.locality}, ${placemark.administrativeArea}, ${placemark.country}');
+    } else {
+      print('No address found');
+    }
+  } else {
+    print('Location permission not granted');
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  String deviceId = await getDeviceId();
+  print("Device ID: $deviceId");
+  printIpAddress();
+  await getCurrentLocation();
+
+  runApp(MyApp(deviceId: deviceId));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String deviceId;
+
+  MyApp({required this.deviceId});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Vehicle Management',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
       home: SplashScreen(),
     );
   }
 }
 
+
+// import 'dart:io';
 // import 'package:flutter/material.dart';
-// import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+// import 'package:device_info_plus/device_info_plus.dart';
+// import 'package:get/get.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:uuid/uuid.dart';
+// import 'package:vehiclemanagement/components/splash_screen/splash_screen.dart';
+//
+// void printIpAddress() async {
+//   try {
+//     var interfaces = await NetworkInterface.list();
+//     for (var interface in interfaces) {
+//       for (var addr in interface.addresses) {
+//         print('IP Address: ${addr.address}');
+//       }
+//     }
+//   } catch (e) {
+//     print("Error fetching IP address: $e");
+//   }
+// }
+//
+// Future<String> getDeviceId() async {
+//   final deviceInfoPlugin = DeviceInfoPlugin();
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   const uuid = Uuid();
+//
+//   String deviceId = prefs.getString('deviceId') ?? '';
+//
+//   if (deviceId.isEmpty) {
+//     try {
+//       if (Platform.isAndroid) {
+//         final androidInfo = await deviceInfoPlugin.androidInfo;
+//         deviceId = uuid.v4();
+//       } else if (Platform.isIOS) {
+//         final iosInfo = await deviceInfoPlugin.iosInfo;
+//         deviceId = iosInfo.identifierForVendor ?? uuid.v4();
+//       }
+//     } catch (e) {
+//       print("Error fetching/generating device ID: $e");
+//       deviceId = uuid.v4();
+//     }
+//
+//     await prefs.setString('deviceId', deviceId);
+//   }
+//
+//   return deviceId;
+// }
+//
+//
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   String deviceId = await getDeviceId();
+//   print("Device ID: $deviceId");
+//   printIpAddress();
+//
+//   runApp(MyApp(deviceId: deviceId));
+// }
+//
+// class MyApp extends StatelessWidget {
+//   final String deviceId;
+//
+//   MyApp({required this.deviceId});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: SplashScreen(),
+//     );
+//   }
+// }
+
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'counter_controller.dart';
 //
 // void main() {
 //   runApp(MyApp());
 // }
 //
-// /// The application that contains datagrid on it.
 // class MyApp extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Syncfusion DataGrid Demo',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: MyHomePage(),
+//     return GetMaterialApp(
+//       home: HomeScreen(),
 //     );
 //   }
 // }
 //
-// /// The home page of the application which hosts the datagrid.
-// class MyHomePage extends StatefulWidget {
-//   /// Creates the home page.
-//   MyHomePage({Key? key}) : super(key: key);
-//
-//   @override
-//   _MyHomePageState createState() => _MyHomePageState();
-// }
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   List<Employee> employees = <Employee>[];
-//   late EmployeeDataSource employeeDataSource;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     employees = getEmployeeData();
-//     employeeDataSource = EmployeeDataSource(employeeData: employees);
-//   }
+// class HomeScreen extends StatelessWidget {
+//   final CounterController controller = Get.put(CounterController());
 //
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
 //       appBar: AppBar(
-//         title: const Text('Syncfusion Flutter DataGrid'),
+//         title: Text('GetX '),
 //       ),
-//       body: SfDataGrid(
-//
-//         source: employeeDataSource,
-//         columnWidthMode: ColumnWidthMode.fill,
-//         columns: <GridColumn>[
-//           GridColumn(
-//               columnName: 'id',
-//               label: Container(
-//                   padding: EdgeInsets.all(16.0),
-//                   alignment: Alignment.center,
-//                   child: Text(
-//                     'ID',
-//                   ))),
-//           GridColumn(
-//               columnName: 'name',
-//               label: Container(
-//                   padding: EdgeInsets.all(8.0),
-//                   alignment: Alignment.center,
-//                   child: Text('Name'))),
-//           GridColumn(
-//               columnName: 'designation',
-//               label: Container(
-//                   padding: EdgeInsets.all(8.0),
-//                   alignment: Alignment.center,
-//                   child: Text(
-//                     'Designation',
-//                     overflow: TextOverflow.ellipsis,
-//                   ))),
-//           GridColumn(
-//               columnName: 'salary',
-//               label: Container(
-//                   padding: EdgeInsets.all(8.0),
-//                   alignment: Alignment.center,
-//                   child: Text('Salary'))),
-//           GridColumn(
-//               columnName: 'company',
-//               label: Container(
-//                   padding: EdgeInsets.all(8.0),
-//                   alignment: Alignment.center,
-//                   child: Text('company'))),
-//         ],
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Obx(() => Text(
+//               'Counter: ${controller.counter}',
+//               style: TextStyle(fontSize: 30),
+//             )),
+//             SizedBox(height: 20),
+//             ElevatedButton(
+//               onPressed: () {
+//                 controller.increment();
+//               },
+//               child: Text('Increment'),
+//             ),
+//           ],
+//         ),
 //       ),
 //     );
 //   }
-//
-//   List<Employee> getEmployeeData() {
-//     return [
-//       Employee(10001, 'James', 'Project Lead', 20000, "lkkkk"),
-//       Employee(10002, 'Kathryn', 'Manager', 30000, "lkkk"),
-//       Employee(10003, 'Lara', 'Developer', 15000, "lkkk"),
-//       Employee(10004, 'Michael', 'Designer', 15000, "lkkk"),
-//       Employee(10005, 'Martin', 'Developer', 15000, "lkkk"),
-//       Employee(10006, 'Newberry', 'Developer', 15000, "lkkk"),
-//       Employee(10007, 'Balnc', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10009, 'Gable', 'Developer', 15000, "lkkk"),
-//       Employee(10010, 'Grimes', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//       Employee(10008, 'Perry', 'Developer', 15000, "lkkk"),
-//
-//
-//     ];
-//   }
 // }
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:get/get_navigation/src/root/get_material_app.dart';
+// import 'package:get/get_navigation/src/routes/get_route.dart';
+// import 'package:vehiclemanagement/components/permissions/permission_equatable.dart';
+// import 'package:vehiclemanagement/components/roles/roles_page.dart';
+// import 'package:vehiclemanagement/components/splash_screen/splash_screen.dart';
+// import 'package:vehiclemanagement/components/vehicles/vehicle_bloc.dart';
+// import 'components/menus/menu_page.dart';
+// import 'components/menus/menuswithsubmenu.dart';
+// import 'components/permissions/permission_bloc.dart';
 //
-// /// Custom business object class which contains properties to hold the detailed
-// /// information about the employee which will be rendered in datagrid.
-// class Employee {
-//   /// Creates the employee class with required details.
-//   Employee(this.id, this.name, this.designation, this.salary , this.company);
+// void main() {
+//   runApp(MyApp());
+//   var a = Person(name: "shreya", lastname: "crud");
+//   var b = Person(name: "shreya", lastname: "crud");
 //
-//   /// Id of an employee.
-//   final int id;
-//
-//   /// Name of an employee.
-//   final String name;
-//
-//   /// Designation of an employee.
-//   final String designation;
-//
-//   /// Salary of an employee.
-//   final int salary;
-//   final String company;
+//   print(a == b);
 //
 // }
 //
-// /// An object to set the employee collection data source to the datagrid. This
-// /// is used to map the employee data to the datagrid widget.
-// class EmployeeDataSource extends DataGridSource {
-//   /// Creates the employee data source class with required details.
-//   EmployeeDataSource({required List<Employee> employeeData}) {
-//     _employeeData = employeeData
-//         .map<DataGridRow>((e) => DataGridRow(cells: [
-//       DataGridCell<int>(columnName: 'id', value: e.id),
-//       DataGridCell<String>(columnName: 'name', value: e.name),
-//       DataGridCell<String>(
-//           columnName: 'designation', value: e.designation),
-//       DataGridCell<int>(columnName: 'salary', value: e.salary),
-//       DataGridCell<String>(columnName: 'company', value: e.company),
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'Vehicle Management',
 //
-//     ]))
-//         .toList();
+//       home: MultiBlocProvider(
+//         providers: [
+//           BlocProvider<PermissionBloc>(
+//             create: (_) => PermissionBloc(),
+//           ),
+//         ],
+//         child: SplashScreen(),
+//       ),
+//     );
 //   }
+// }
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
 //
-//   List<DataGridRow> _employeeData = [];
+// void main() {
+//   runApp(MyApp());
+// }
 //
+// class MyApp extends StatelessWidget {
 //   @override
-//   List<DataGridRow> get rows => _employeeData;
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       initialRoute: '/',
+//       getPages: [
+//         GetPage(name: '/', page: () => ScreenA()),
+//         GetPage(name: '/screenB', page: () => ScreenB()),
+//       ],
+//     );
+//   }
+// }
 //
+// class ScreenA extends StatelessWidget {
 //   @override
-//   DataGridRowAdapter buildRow(DataGridRow row) {
-//     return DataGridRowAdapter(
-//         cells: row.getCells().map<Widget>((e) {
-//           return Container(
-//             alignment: Alignment.center,
-//             padding: EdgeInsets.all(8.0),
-//             child: Text(e.value.toString()),
-//           );
-//         }).toList());
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text("Screen A")),
+//       body: Center(
+//         child: ElevatedButton(
+//           onPressed: () {
+//             Get.toNamed('/screenB', arguments: {'name': 'shreya', 'age': 20});
+//           },
+//           child: Text("Go to Screen B"),
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+// class ScreenB extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     var arguments = Get.arguments;
+//     var name = arguments['name'];
+//     var age = arguments['age'];
+//
+//     return Scaffold(
+//       appBar: AppBar(title: Text("Screen B")),
+//       body: Center(
+//         child: Text("Name: $name, Age: $age"),
+//       ),
+//     );
 //   }
 // }
