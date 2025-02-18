@@ -25,10 +25,6 @@ class BottomNavBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => Menuswithsubmenu()),
-        // );
         Get.to(Menuswithsubmenu());
         break;
       case 1:
@@ -41,31 +37,11 @@ class BottomNavBar extends StatelessWidget {
         );
 
         break;
-      // case 2:
-      //   // Navigator.push(
-      //   //   context,
-      //   //   MaterialPageRoute(builder: (context) => VehiclesPage()),
-      //   // );
-      //   Get.to(VehiclesPage());
-      //
-      //   break;
+
       case 2:
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => MenuPage()),
-        // );
         Get.to(MenuPage());
 
         break;
-      // case 4:
-      //   Navigator.push(
-      //     context,
-      //     MaterialPageRoute(builder: (context) => BlocProvider<VehicleBloc>(
-      //       create: (_) => VehicleBloc(),
-      //       child: VehicleNewpage(),
-      //     )),
-      //   );
-      //   break;
       default:
         break;
     }
@@ -90,14 +66,6 @@ class BottomNavBar extends StatelessWidget {
           icon: Icon(Icons.car_repair,size: 30),
           label: 'Menus',
         ),
-        // BottomNavigationBarItem(
-        //   icon: Icon(Icons.menu,size: 30),
-        //   label: 'Menus',
-        // ),
-        // BottomNavigationBarItem(
-        //   icon: Icon(Icons.menu,size: 30),
-        //   label: 'NEw',
-        // ),
       ],
     );
   }

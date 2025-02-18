@@ -333,7 +333,6 @@ void showMyCustomDialog(BuildContext context) {
     title: "Are you sure?",
     content: Text("Do you want to proceed?"),
     actions: [
-      // "Cancel" button
       TextButton(
         onPressed: () {
           Navigator.pop(context);
