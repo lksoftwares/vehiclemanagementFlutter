@@ -1,9 +1,10 @@
-allprojects {
+buildscript {
     repositories {
         google()
         mavenCentral()
     }
-    subprojects {
+
+subprojects {
         afterEvaluate { project ->
             if (project.hasProperty('android')) {
                 project.android {

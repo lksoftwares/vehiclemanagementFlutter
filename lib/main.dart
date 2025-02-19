@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'components/widgetmethods/contactaccess_screen.dart';
-import 'components/widgetmethods/locationaccess_screen.dart';
-import 'components/widgetmethods/wifi_method.dart';
-
+import 'methods/nodatafoundgif.dart';
 
 void main() {
   runApp(MyApp());
@@ -12,8 +9,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter',
-      home: ConnectivityScreen(),
+      home: NoDataScreen(),
     );
   }
 }

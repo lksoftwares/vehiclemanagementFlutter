@@ -1,5 +1,6 @@
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactAccess {
   static Future<bool> requestContactPermission() async {
@@ -15,6 +16,7 @@ class ContactAccess {
     }
     return false;
   }
+
   static Future<List<Contact>> getContacts() async {
     bool hasPermission = await requestContactPermission();
     if (hasPermission) {
@@ -25,5 +27,17 @@ class ContactAccess {
       return contacts;
     }
     return [];
+  }
+
+  static Future<void> openDialer(String phoneNumber) async {
+    String formattedPhoneNumber = phoneNumber.replaceAll(RegExp(r'\s+'), '');
+
+    final Uri dialUri = Uri(scheme: 'tel', path: formattedPhoneNumber);
+
+    if (await launchUrl(dialUri)) {
+      await launchUrl(dialUri);
+    } else {
+      throw 'Could not launch dialer';
+    }
   }
 }

@@ -66,6 +66,7 @@ dependencies:
   geocoding: ^3.0.0
   flutter_contacts: ^1.1.9+2
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

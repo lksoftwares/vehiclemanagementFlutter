@@ -1,6 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 
-import '../../all_files.dart';
+import '../all_files.dart';
 import 'locationaccess_method.dart';
 
 class LocationScreen extends StatelessWidget {

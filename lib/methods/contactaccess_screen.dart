@@ -1,5 +1,6 @@
 import 'package:flutter_contacts/contact.dart';
-import '../../all_files.dart';
+import 'package:flutter/material.dart';
+import '../all_files.dart';
 import 'contactaccess_method.dart';
 
 class ContactsScreen extends StatefulWidget {
@@ -34,11 +35,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
           : ListView.builder(
         itemCount: _contacts.length,
         itemBuilder: (context, index) {
+          final contact = _contacts[index];
+          final phoneNumber = contact.phones.isNotEmpty ? contact.phones[0].number : '';
+
           return ListTile(
-            leading: _contacts[index].thumbnail != null
-                ? CircleAvatar(backgroundImage: MemoryImage(_contacts[index].thumbnail!))
+            leading: contact.thumbnail != null
+                ? CircleAvatar(backgroundImage: MemoryImage(contact.thumbnail!))
                 : null,
-            title: Text(_contacts[index].displayName ?? 'No Name'),
+            title: Text(contact.displayName ?? 'No Name'),
+            subtitle: Text(phoneNumber),
+            onTap: () {
+              if (phoneNumber.isNotEmpty) {
+                ContactAccess.openDialer(phoneNumber);
+              }
+            },
           );
         },
       ),
