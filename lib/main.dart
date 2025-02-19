@@ -1,83 +1,25 @@
-
-
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:vehiclemanagement/components/splash_screen/splash_screen.dart';
-import 'package:vehiclemanagement/components/widgetmethods/shimmer.dart';
+import 'components/widgetmethods/contactaccess_screen.dart';
+import 'components/widgetmethods/locationaccess_screen.dart';
+import 'components/widgetmethods/wifi_method.dart';
 
-class LocationService {
-  Future<LocationPermission> _checkAndRequestPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    return permission;
-  }
-
-  Future<Position> getCurrentLocation() async {
-    LocationPermission permissionStatus = await _checkAndRequestPermission();
-
-    if (permissionStatus == LocationPermission.whileInUse ||
-        permissionStatus == LocationPermission.always) {
-      return await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-    } else {
-      throw Exception('Location permission is denied');
-    }
-  }
-}
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  final LocationService _locationService = LocationService();
-
-  @override
-  void initState() {
-    super.initState();
-    _requestLocationPermission();
-  }
-
-  Future<void> _requestLocationPermission() async {
-    try {
-      LocationPermission permissionStatus = await _locationService._checkAndRequestPermission();
-      if (permissionStatus == LocationPermission.whileInUse || permissionStatus == LocationPermission.always) {
-        Position position = await _locationService.getCurrentLocation();
-        setState(() {
-          print( "Location: ${position.latitude}, ${position.longitude}") ;
-        });
-      } else {
-        setState(() {
-          print ("Permission denied!");
-        });
-      }
-    } catch (e) {
-      setState(() {
-        print( "Error: $e") ;
-      });
-    }
-  }
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: LoadingScreen()
+      title: 'Flutter',
+      home: ConnectivityScreen(),
     );
   }
 }
+
+
+
 
 
 
